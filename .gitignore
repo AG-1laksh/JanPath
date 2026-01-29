@@ -9,7 +9,8 @@ node_modules/
 # Next.js
 /.next/
 /out/
-
+.next/
+*.gz
 # Production
 /build
 /dist
