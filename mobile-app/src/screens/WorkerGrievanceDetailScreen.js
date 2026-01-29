@@ -9,6 +9,7 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack, mode }) =
   const [loading, setLoading] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [progressText, setProgressText] = useState('');
+  const [requestReason, setRequestReason] = useState('');
   
   const updateStatus = async (nextStatus, remarks) => {
     if (!grievance?.id || !currentUser?.uid) return;
@@ -42,15 +43,21 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack, mode }) =
 
   const requestAccess = async () => {
     if (!grievance?.id || !currentUser?.uid) return;
+    if (!requestReason.trim()) {
+      Alert.alert('Missing reason', 'Please add a short reason for the request.');
+      return;
+    }
 
     try {
       setRequesting(true);
       await addDoc(collection(db, 'workerRequests'), {
         grievanceId: grievance.id,
         workerId: currentUser.uid,
+        reason: requestReason.trim(),
         status: 'Pending',
         requestedAt: serverTimestamp(),
       });
+      setRequestReason('');
       Alert.alert('Requested', 'Access request sent to admin.');
     } catch (error) {
       Alert.alert('Request failed', error?.message || 'Please try again.');
@@ -115,11 +122,20 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack, mode }) =
 
         <View style={styles.buttonGroup}>
           {mode === 'available' ? (
-            <Button
-              title={requesting ? 'Please wait...' : 'Request Access'}
-              onPress={requestAccess}
-              disabled={requesting || !canRequest}
-            />
+            <>
+              <Text style={styles.label}>Reason for request</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Write a short reason"
+                value={requestReason}
+                onChangeText={setRequestReason}
+              />
+              <Button
+                title={requesting ? 'Please wait...' : 'Request Access'}
+                onPress={requestAccess}
+                disabled={requesting || !canRequest}
+              />
+            </>
           ) : (
             <>
               <Text style={styles.label}>Progress Update</Text>

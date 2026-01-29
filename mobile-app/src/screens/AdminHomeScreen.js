@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Button, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   addDoc,
   collection,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -20,6 +21,10 @@ const AdminHomeScreen = ({ currentUser }) => {
   const [pendingWorkerSignups, setPendingWorkerSignups] = useState([]);
   const [registeredWorkers, setRegisteredWorkers] = useState([]);
   const [unassignedGrievances, setUnassignedGrievances] = useState([]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedSignup, setSelectedSignup] = useState(null);
+  const [selectedGrievance, setSelectedGrievance] = useState(null);
+  const [grievanceDetail, setGrievanceDetail] = useState(null);
   const [assignGrievanceId, setAssignGrievanceId] = useState('');
   const [assignWorkerId, setAssignWorkerId] = useState('');
   const [assigning, setAssigning] = useState(false);
@@ -88,6 +93,29 @@ const AdminHomeScreen = ({ currentUser }) => {
       unsubscribeGrievances();
     };
   }, []);
+
+  useEffect(() => {
+    const fetchGrievance = async (grievanceId) => {
+      if (!grievanceId) {
+        setGrievanceDetail(null);
+        return;
+      }
+      const docSnap = await getDoc(doc(db, 'grievances', grievanceId));
+      if (docSnap.exists()) {
+        setGrievanceDetail({ id: docSnap.id, ...docSnap.data() });
+      } else {
+        setGrievanceDetail(null);
+      }
+    };
+
+    if (selectedRequest?.grievanceId) {
+      fetchGrievance(selectedRequest.grievanceId);
+    } else if (selectedGrievance?.id) {
+      fetchGrievance(selectedGrievance.id);
+    } else {
+      setGrievanceDetail(null);
+    }
+  }, [selectedRequest, selectedGrievance]);
 
   const assignGrievance = async (grievanceId, workerId, remarks) => {
     if (!grievanceId || !workerId) {
@@ -171,14 +199,113 @@ const AdminHomeScreen = ({ currentUser }) => {
         <Button title="Sign out" onPress={() => signOut(auth)} />
       </View>
 
-      <View style={styles.tabRow}>
-        <Button title="Requests" onPress={() => setActiveTab('requests')} />
-        <Button title="Signups" onPress={() => setActiveTab('signups')} />
-        <Button title="Assign" onPress={() => setActiveTab('assign')} />
-        <Button title="Workers" onPress={() => setActiveTab('workers')} />
-      </View>
+      {selectedSignup && (
+        <View style={styles.detailCard}>
+          <View style={styles.detailHeaderRow}>
+            <Text style={styles.sectionTitle}>Worker Signup Details</Text>
+            <Button title="Back" onPress={() => setSelectedSignup(null)} />
+          </View>
+          <Text style={styles.cardTitle}>{selectedSignup.name}</Text>
+          <Text style={styles.cardMeta}>Email: {selectedSignup.email}</Text>
+          <Text style={styles.cardMeta}>DOB: {selectedSignup.dob}</Text>
+          <Text style={styles.cardMeta}>Phone: {selectedSignup.phone}</Text>
+          <Text style={styles.cardMeta}>Aadhar: {selectedSignup.aadhar}</Text>
+          <Text style={styles.cardMeta}>City: {selectedSignup.city}</Text>
+          <Text style={styles.cardMeta}>Department: {selectedSignup.department}</Text>
+          <Text style={styles.cardMeta}>
+            Experience: {selectedSignup.experienceYears || '0'}y {selectedSignup.experienceMonths || '0'}m
+          </Text>
+          <Text style={styles.cardMeta}>
+            Skills: {(selectedSignup.skills || []).join(', ')}
+          </Text>
+          <View style={styles.actionRow}>
+            <Button title="Approve" onPress={() => approveWorkerSignup(selectedSignup)} />
+            <Button title="Reject" onPress={() => denyWorkerSignup(selectedSignup)} />
+          </View>
+        </View>
+      )}
 
-      {activeTab === 'requests' && (
+      {selectedRequest && !selectedSignup && (
+        <View style={styles.detailCard}>
+          <View style={styles.detailHeaderRow}>
+            <Text style={styles.sectionTitle}>Worker Request Details</Text>
+            <Button title="Back" onPress={() => setSelectedRequest(null)} />
+          </View>
+          <Text style={styles.cardMeta}>Worker: {selectedRequest.workerId}</Text>
+          <Text style={styles.cardMeta}>Grievance: {selectedRequest.grievanceId}</Text>
+          <Text style={styles.cardMeta}>Reason: {selectedRequest.reason}</Text>
+          {grievanceDetail && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>{grievanceDetail.title}</Text>
+              <Text style={styles.cardMeta}>Category: {grievanceDetail.category}</Text>
+              <Text style={styles.cardMeta}>Priority: {grievanceDetail.priority}</Text>
+              <Text style={styles.cardMeta}>Status: {grievanceDetail.status}</Text>
+              <Text style={styles.cardMeta}>Description: {grievanceDetail.description}</Text>
+              {grievanceDetail.imageBase64 ? (
+                <Image
+                  source={{ uri: `data:image/jpeg;base64,${grievanceDetail.imageBase64}` }}
+                  style={styles.preview}
+                />
+              ) : null}
+            </View>
+          )}
+          <View style={styles.actionRow}>
+            <Button title="Approve" onPress={() => approveRequest(selectedRequest)} />
+            <Button title="Deny" onPress={() => denyRequest(selectedRequest)} />
+          </View>
+        </View>
+      )}
+
+      {selectedGrievance && !selectedSignup && !selectedRequest && (
+        <View style={styles.detailCard}>
+          <View style={styles.detailHeaderRow}>
+            <Text style={styles.sectionTitle}>Grievance Details</Text>
+            <Button title="Back" onPress={() => setSelectedGrievance(null)} />
+          </View>
+          {grievanceDetail && (
+            <>
+              <Text style={styles.cardTitle}>{grievanceDetail.title}</Text>
+              <Text style={styles.cardMeta}>Category: {grievanceDetail.category}</Text>
+              <Text style={styles.cardMeta}>Priority: {grievanceDetail.priority}</Text>
+              <Text style={styles.cardMeta}>Status: {grievanceDetail.status}</Text>
+              <Text style={styles.cardMeta}>Description: {grievanceDetail.description}</Text>
+              {grievanceDetail.imageBase64 ? (
+                <Image
+                  source={{ uri: `data:image/jpeg;base64,${grievanceDetail.imageBase64}` }}
+                  style={styles.preview}
+                />
+              ) : null}
+            </>
+          )}
+          <Text style={styles.sectionTitle}>Available Workers</Text>
+          {registeredWorkers.length === 0 ? (
+            <Text style={styles.emptyText}>No registered workers.</Text>
+          ) : (
+            registeredWorkers.map((worker) => (
+              <View key={worker.id} style={styles.card}>
+                <Text style={styles.cardTitle}>{worker.name}</Text>
+                <Text style={styles.cardMeta}>Department: {worker.department || 'N/A'}</Text>
+                <Text style={styles.cardMeta}>Email: {worker.email}</Text>
+                <Button
+                  title="Assign"
+                  onPress={() => assignGrievance(selectedGrievance.id, worker.id, 'Assigned by admin')}
+                />
+              </View>
+            ))
+          )}
+        </View>
+      )}
+
+      {!selectedSignup && !selectedRequest && !selectedGrievance && (
+        <View style={styles.tabRow}>
+          <Button title="Requests" onPress={() => setActiveTab('requests')} />
+          <Button title="Signups" onPress={() => setActiveTab('signups')} />
+          <Button title="Assign" onPress={() => setActiveTab('assign')} />
+          <Button title="Workers" onPress={() => setActiveTab('workers')} />
+        </View>
+      )}
+
+      {!selectedSignup && !selectedRequest && !selectedGrievance && activeTab === 'requests' && (
         <>
           <Text style={styles.sectionTitle}>Pending Worker Requests</Text>
           {pendingRequests.length === 0 ? (
@@ -189,21 +316,18 @@ const AdminHomeScreen = ({ currentUser }) => {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.list}
               renderItem={({ item }) => (
-                <View style={styles.card}>
+                <TouchableOpacity style={styles.card} onPress={() => setSelectedRequest(item)}>
                   <Text style={styles.cardTitle}>Grievance: {item.grievanceId}</Text>
                   <Text style={styles.cardMeta}>Worker: {item.workerId}</Text>
-                  <View style={styles.actionRow}>
-                    <Button title="Approve" onPress={() => approveRequest(item)} />
-                    <Button title="Deny" onPress={() => denyRequest(item)} />
-                  </View>
-                </View>
+                  <Text style={styles.cardMeta}>Reason: {item.reason}</Text>
+                </TouchableOpacity>
               )}
             />
           )}
         </>
       )}
 
-      {activeTab === 'signups' && (
+      {!selectedSignup && !selectedRequest && !selectedGrievance && activeTab === 'signups' && (
         <>
           <Text style={styles.sectionTitle}>Worker Signup Requests</Text>
           {pendingWorkerSignups.length === 0 ? (
@@ -214,22 +338,18 @@ const AdminHomeScreen = ({ currentUser }) => {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.list}
               renderItem={({ item }) => (
-                <View style={styles.card}>
+                <TouchableOpacity style={styles.card} onPress={() => setSelectedSignup(item)}>
                   <Text style={styles.cardTitle}>{item.name}</Text>
                   <Text style={styles.cardMeta}>Dept: {item.department}</Text>
                   <Text style={styles.cardMeta}>City: {item.city}</Text>
-                  <View style={styles.actionRow}>
-                    <Button title="Approve" onPress={() => approveWorkerSignup(item)} />
-                    <Button title="Reject" onPress={() => denyWorkerSignup(item)} />
-                  </View>
-                </View>
+                </TouchableOpacity>
               )}
             />
           )}
         </>
       )}
 
-      {activeTab === 'assign' && (
+      {!selectedSignup && !selectedRequest && !selectedGrievance && activeTab === 'assign' && (
         <>
           <Text style={styles.sectionTitle}>Unassigned Grievances</Text>
           {unassignedGrievances.length === 0 ? (
@@ -240,10 +360,10 @@ const AdminHomeScreen = ({ currentUser }) => {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.list}
               renderItem={({ item }) => (
-                <View style={styles.card}>
+                <TouchableOpacity style={styles.card} onPress={() => setSelectedGrievance(item)}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardMeta}>ID: {item.id}</Text>
-                </View>
+                </TouchableOpacity>
               )}
             />
           )}
@@ -269,7 +389,7 @@ const AdminHomeScreen = ({ currentUser }) => {
         </>
       )}
 
-      {activeTab === 'workers' && (
+      {!selectedSignup && !selectedRequest && !selectedGrievance && activeTab === 'workers' && (
         <>
           <Text style={styles.sectionTitle}>Registered Workers</Text>
           {registeredWorkers.length === 0 ? (
@@ -355,6 +475,26 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  detailCard: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e1e6f2',
+    marginBottom: 12,
+  },
+  detailHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  preview: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
     marginTop: 8,
   },
   groupBlock: {
