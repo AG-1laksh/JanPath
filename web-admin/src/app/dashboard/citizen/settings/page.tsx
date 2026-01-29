@@ -41,7 +41,7 @@ export default function SettingsPage() {
 
     if (!mounted) return null;
 
-    const languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Kannada"] as const;
+    const languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Kannada", "Marathi", "Malayalam"] as const;
 
     return (
         <div className="flex h-screen w-full overflow-hidden">

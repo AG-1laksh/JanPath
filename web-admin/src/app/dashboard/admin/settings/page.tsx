@@ -46,7 +46,7 @@ export default function AdminSettingsPage() {
     const [dataExport, setDataExport] = useState(false);
     
     const [isLangOpen, setIsLangOpen] = useState(false);
-    const languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Kannada"] as const;
+    const languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Kannada", "Marathi", "Malayalam"] as const;
 
     useEffect(() => {
         setMounted(true);
