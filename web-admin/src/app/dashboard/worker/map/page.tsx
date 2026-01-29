@@ -15,6 +15,8 @@ import {
     AlertTriangle
 } from "lucide-react";
 
+import { useSettings } from "@/context/SettingsContext";
+
 const WORKER_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "My Tasks", href: "/dashboard/worker" },
     { icon: MapPin, label: "Map View", href: "/dashboard/worker/map" },
@@ -52,6 +54,7 @@ const TASK_LOCATIONS = [
 ];
 
 export default function WorkerMapView() {
+    const { t } = useSettings();
     const [liveTracking, setLiveTracking] = useState(true);
 
     return (
@@ -60,8 +63,8 @@ export default function WorkerMapView() {
 
             <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header
-                    title="Location Map"
-                    description="Track active tasks, route progress, and nearby alerts."
+                    title={t("Location Map")}
+                    description={t("Track active tasks, route progress, and nearby alerts.")}
                 />
 
                 <div className="grid lg:grid-cols-3 gap-8">
@@ -74,8 +77,8 @@ export default function WorkerMapView() {
                                         <Navigation size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold">Live Field Map</h3>
-                                        <p className="text-sm text-slate-500">Showing active route and task markers</p>
+                                        <h3 className="text-lg font-bold">{t("Live Field Map")}</h3>
+                                        <p className="text-sm text-slate-500">{t("Showing active route and task markers")}</p>
                                     </div>
                                 </div>
                                 <button
@@ -89,14 +92,14 @@ export default function WorkerMapView() {
                             <div className="h-full flex items-center justify-center text-slate-400">
                                 <div className="text-center">
                                     <MapPin size={48} className="mx-auto text-emerald-400 mb-3" />
-                                    <p className="font-medium">Map integration ready</p>
-                                    <p className="text-xs text-slate-600">Connect GIS/Maps API to render routes</p>
+                                    <p className="font-medium">{t("Map integration ready")}</p>
+                                    <p className="text-xs text-slate-600">{t("Connect GIS/Maps API to render routes")}</p>
                                 </div>
                             </div>
 
                             <div className="absolute left-6 bottom-6 flex items-center gap-3 text-xs text-slate-400">
                                 <Crosshair size={14} className="text-emerald-400" />
-                                Live GPS: {liveTracking ? "Active" : "Paused"}
+                                {t("Live GPS")}: {liveTracking ? t("Active") : t("Paused")}
                             </div>
                         </div>
 
@@ -104,37 +107,37 @@ export default function WorkerMapView() {
                             <button className="p-4 rounded-2xl bg-[#0a0a0a] border border-white/10 hover:border-emerald-500/40 transition-colors text-left">
                                 <div className="flex items-center gap-3 text-emerald-400 mb-2">
                                     <Route size={18} />
-                                    <span className="font-semibold">Optimize Route</span>
+                                    <span className="font-semibold">{t("Optimize Route")}</span>
                                 </div>
-                                <p className="text-sm text-slate-500">Auto-arrange stops for fastest completion</p>
+                                <p className="text-sm text-slate-500">{t("Auto-arrange stops for fastest completion")}</p>
                             </button>
                             <button className="p-4 rounded-2xl bg-[#0a0a0a] border border-white/10 hover:border-blue-500/40 transition-colors text-left">
                                 <div className="flex items-center gap-3 text-blue-400 mb-2">
                                     <AlertTriangle size={18} />
-                                    <span className="font-semibold">Nearby Alerts</span>
+                                    <span className="font-semibold">{t("Nearby Alerts")}</span>
                                 </div>
-                                <p className="text-sm text-slate-500">View hazards and blocked access points</p>
+                                <p className="text-sm text-slate-500">{t("View hazards and blocked access points")}</p>
                             </button>
                         </div>
                     </div>
 
                     <div className="lg:col-span-1 space-y-6">
                         <div className="p-6 rounded-3xl bg-[#0a0a0a] border border-white/10">
-                            <h3 className="text-lg font-bold text-white mb-4">Task Locations</h3>
+                            <h3 className="text-lg font-bold text-white mb-4">{t("Task Locations")}</h3>
                             <div className="space-y-4">
                                 {TASK_LOCATIONS.map((task) => (
                                     <div key={task.id} className="p-4 rounded-2xl bg-white/5 border border-white/5">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-sm font-semibold text-white">{task.title}</span>
-                                            <span className="text-xs text-emerald-400">{task.status}</span>
+                                            <span className="text-xs text-emerald-400">{t(task.status)}</span>
                                         </div>
                                         <div className="text-xs text-slate-500">{task.area}</div>
                                         <div className="flex items-center justify-between mt-3 text-xs">
                                             <div className="flex items-center gap-2 text-slate-400">
                                                 <Clock size={12} />
-                                                ETA {task.eta}
+                                                {t("ETA")} {task.eta}
                                             </div>
-                                            <span className="text-xs text-purple-300">{task.priority} Priority</span>
+                                            <span className="text-xs text-purple-300">{t(task.priority)} {t("Priority")}</span>
                                         </div>
                                     </div>
                                 ))}
