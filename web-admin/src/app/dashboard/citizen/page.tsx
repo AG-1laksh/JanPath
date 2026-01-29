@@ -19,6 +19,10 @@ import {
 } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { Chatbot } from "@/components/Chatbot";
+import { useAuth } from "@/context/AuthContext";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useEffect, useMemo, useState } from "react";
 
 // Updated Sidebar items based on the provided image
 const CITIZEN_SIDEBAR_ITEMS = [
@@ -30,25 +34,67 @@ const CITIZEN_SIDEBAR_ITEMS = [
     { icon: BarChart, label: "Reports", href: "/dashboard/citizen/reports" },
 ];
 
-const CITIZEN_STATS = [
-    { label: "Total", value: "0", icon: FileText, color: "slate", trendUp: true },
-    { label: "Resolved", value: "0", icon: CheckCircle, color: "emerald", trendUp: true },
-    { label: "Pending", value: "0", icon: Clock, color: "orange", trendUp: false },
-];
-
-// Mock User Data matching the image
-const USER_DATA = {
-    name: "Lakshya Agarwal",
-    email: "resilient.warrior123@gmail.com",
-    phone: "Not provided",
-    role: "Citizen",
-    location: "Not provided",
-    joinDate: "1/29/2026",
-    avatarInitials: "LA",
+type CitizenUser = {
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+    location: string;
+    joinDate: string;
+    avatarInitials: string;
 };
 
 export default function CitizenDashboard() {
     const { t } = useSettings();
+    const { user, profile } = useAuth();
+    const [grievances, setGrievances] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!db || !user) return;
+        const grievancesQuery = query(
+            collection(db, "grievances"),
+            where("userId", "==", user.uid),
+            orderBy("createdAt", "desc")
+        );
+        const unsubscribe = onSnapshot(grievancesQuery, (snapshot) => {
+            setGrievances(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        });
+        return () => unsubscribe();
+    }, [user]);
+
+    const stats = useMemo(() => {
+        const total = grievances.length;
+        const resolved = grievances.filter((g) => g.status === "Resolved" || g.status === "Closed").length;
+        const pending = grievances.filter((g) => g.status !== "Resolved" && g.status !== "Closed").length;
+        return [
+            { label: "Total", value: total.toString(), icon: FileText, color: "slate", trendUp: true },
+            { label: "Resolved", value: resolved.toString(), icon: CheckCircle, color: "emerald", trendUp: true },
+            { label: "Pending", value: pending.toString(), icon: Clock, color: "orange", trendUp: false },
+        ];
+    }, [grievances]);
+
+    const displayUser: CitizenUser = useMemo(() => {
+        const name = profile?.name || user?.displayName || "Citizen";
+        const email = profile?.email || user?.email || "";
+        const initials = name
+            .split(" ")
+            .filter(Boolean)
+            .map((n) => n[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
+        return {
+            name,
+            email,
+            phone: (profile as any)?.phone || "Not provided",
+            role: "Citizen",
+            location: profile?.city || "Not provided",
+            state: profile?.state || "Not provided",
+            address: profile?.address || "Not provided",
+            joinDate: profile?.createdAt?.toDate ? profile.createdAt.toDate().toLocaleDateString() : "-",
+            avatarInitials: initials || "C",
+        };
+    }, [profile, user]);
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             {/* Note: The design in the image is light mode. Adjusting colors for this specific page if desired, 
@@ -76,7 +122,7 @@ export default function CitizenDashboard() {
                     <div className="lg:col-span-2 space-y-8">
 
                         {/* Profile Section (matches image layout) */}
-                        <ProfileSection user={USER_DATA} isComplete={false} />
+                        <ProfileSection user={displayUser} isComplete={false} />
 
                     </div>
 
@@ -89,15 +135,15 @@ export default function CitizenDashboard() {
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
                                     <span className="text-slate-400 text-sm">{t("Total")}</span>
-                                    <span className="text-lg font-bold text-white">0</span>
+                                    <span className="text-lg font-bold text-white">{stats[0].value}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
                                     <span className="text-slate-400 text-sm">{t("Resolved")}</span>
-                                    <span className="text-lg font-bold text-emerald-400">0</span>
+                                    <span className="text-lg font-bold text-emerald-400">{stats[1].value}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
                                     <span className="text-slate-400 text-sm">{t("Pending")}</span>
-                                    <span className="text-lg font-bold text-orange-400">0</span>
+                                    <span className="text-lg font-bold text-orange-400">{stats[2].value}</span>
                                 </div>
                             </div>
                         </div>

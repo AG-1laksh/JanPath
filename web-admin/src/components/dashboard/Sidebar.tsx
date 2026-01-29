@@ -15,8 +15,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
+import { useAuth } from "@/context/AuthContext";
 
 interface SidebarItem {
     icon: LucideIcon;
@@ -33,6 +34,20 @@ export function Sidebar({ items, userType }: SidebarProps) {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const { t } = useSettings();
+    const { user, profile, signOutUser } = useAuth();
+
+    const displayName = profile?.name || user?.displayName || `${t(userType)} User`;
+    const displayEmail = profile?.email || user?.email || "user@janpath.gov";
+    const initials = useMemo(() => {
+        const name = displayName || "User";
+        return name
+            .split(" ")
+            .filter(Boolean)
+            .map((n) => n[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
+    }, [displayName]);
 
     // Common items that might be at the bottom
     const bottomItems = [
@@ -116,15 +131,22 @@ export function Sidebar({ items, userType }: SidebarProps) {
 
                 {/* User User Profile Snippet */}
                 <div className="p-4 border-t border-sidebar-border bg-black/5 dark:bg-white/2">
-                    <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                            {userType[0].toUpperCase()}
+                            {initials}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-foreground truncate capitalize">{t(userType)} User</div>
-                            <div className="text-xs text-slate-500 truncate">user@janpath.gov</div>
+                            <div className="text-sm font-medium text-foreground truncate">{displayName}</div>
+                            <div className="text-xs text-slate-500 truncate">{displayEmail}</div>
                         </div>
-                        <LogOut size={16} className="text-slate-500 hover:text-rose-400 transition-colors" />
+                        <button
+                            type="button"
+                            onClick={signOutUser}
+                            className="p-1 rounded-md hover:bg-white/10"
+                            aria-label="Sign out"
+                        >
+                            <LogOut size={16} className="text-slate-500 hover:text-rose-400 transition-colors" />
+                        </button>
                     </div>
                 </div>
             </aside>

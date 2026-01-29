@@ -13,6 +13,11 @@ type UserProfile = {
   email?: string;
   role?: "ADMIN" | "WORKER" | "USER" | "WORKER_PENDING" | string;
   department?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+  address?: string | null;
+  createdAt?: any;
 };
 
 type AuthContextValue = {
@@ -60,7 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             department: null,
             createdAt: serverTimestamp(),
           });
-          setProfile({ uid: currentUser.uid, name: displayName, email, role: "USER" });
+          setProfile({
+            uid: currentUser.uid,
+            name: displayName,
+            email,
+            role: "USER",
+            createdAt: new Date(),
+          });
         } else {
           const data = userSnap.data() as Omit<UserProfile, "uid">;
           setProfile({ uid: currentUser.uid, ...data });

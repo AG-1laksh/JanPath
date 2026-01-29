@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, Search, User, LogOut, Settings, X, Check } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -23,6 +24,7 @@ export function Header({ title, description }: HeaderProps) {
     const router = useRouter();
     const pathname = usePathname();
     const userType = pathname?.split("/")[2] || "citizen"; // Default to citizen if not found
+    const { user, profile, signOutUser } = useAuth();
 
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -45,10 +47,13 @@ export function Header({ title, description }: HeaderProps) {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleLogout = () => {
-        // Implement logout logic here (e.g., clearing tokens)
+    const handleLogout = async () => {
+        await signOutUser();
         router.push("/");
     };
+
+    const displayName = profile?.name || user?.displayName || "User";
+    const displayEmail = profile?.email || user?.email || "";
 
     const markAsRead = (id: number) => {
         setNotifications(notifications.map(n => n.id === id ? { ...n, unread: false } : n));
@@ -147,8 +152,8 @@ export function Header({ title, description }: HeaderProps) {
                                 className="absolute right-0 top-12 w-48 rounded-xl bg-card border border-border shadow-xl overflow-hidden p-1 z-50"
                             >
                                 <div className="px-3 py-2 border-b border-border mb-1">
-                                    <p className="font-medium text-sm">User</p>
-                                    <p className="text-xs text-slate-500 truncate">user@janpath.gov.in</p>
+                                    <p className="font-medium text-sm">{displayName}</p>
+                                    <p className="text-xs text-slate-500 truncate">{displayEmail}</p>
                                 </div>
                                 
                                 <button className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-slate-500 hover:text-foreground transition-colors">

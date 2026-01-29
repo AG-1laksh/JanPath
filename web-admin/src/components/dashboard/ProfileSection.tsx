@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Edit3, Check } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ProfileSectionProps {
     user: {
@@ -11,6 +11,8 @@ interface ProfileSectionProps {
         phone: string;
         role: string;
         location?: string;
+        state?: string;
+        address?: string;
         joinDate: string;
         avatarInitials: string;
     };
@@ -21,14 +23,27 @@ export function ProfileSection({ user, isComplete = false }: ProfileSectionProps
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(user);
 
+    useEffect(() => {
+        setFormData(user);
+    }, [user]);
+
     const handleSave = () => {
         setIsEditing(false);
         // Logic to save to backend would go here
     };
 
+    const requiredStatus = {
+        name: Boolean(formData.name && formData.name !== "Not provided"),
+        email: Boolean(formData.email && formData.email !== "Not provided"),
+        city: Boolean(formData.location && formData.location !== "Not provided"),
+        phone: Boolean(formData.phone && formData.phone !== "Not provided"),
+    };
+
+    const allRequiredComplete = requiredStatus.name && requiredStatus.email && requiredStatus.city;
+
     return (
         <div className="space-y-6">
-            {!isComplete && !isEditing && (
+            {!isEditing && !allRequiredComplete && (
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -40,11 +55,19 @@ export function ProfileSection({ user, isComplete = false }: ProfileSectionProps
                     <div>
                         <h4 className="text-orange-200 font-semibold mb-1">Profile Completion Required</h4>
                         <p className="text-sm text-orange-200/70 mb-3">Please complete your profile with the required information to continue using the application.</p>
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs text-orange-300/80">
-                            <span className="flex items-center gap-1">• Name (required)</span>
-                            <span className="flex items-center gap-1">• Email (required)</span>
-                            <span className="flex items-center gap-1">• City (required)</span>
-                            <span className="flex items-center gap-1">• Phone number (optional)</span>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs">
+                            <span className={`flex items-center gap-1 ${requiredStatus.name ? "text-emerald-300" : "text-orange-300/80"}`}>
+                                • Name (required)
+                            </span>
+                            <span className={`flex items-center gap-1 ${requiredStatus.email ? "text-emerald-300" : "text-orange-300/80"}`}>
+                                • Email (required)
+                            </span>
+                            <span className={`flex items-center gap-1 ${requiredStatus.city ? "text-emerald-300" : "text-orange-300/80"}`}>
+                                • City (required)
+                            </span>
+                            <span className={`flex items-center gap-1 ${requiredStatus.phone ? "text-emerald-300" : "text-orange-300/80"}`}>
+                                • Phone number (optional)
+                            </span>
                         </div>
                     </div>
                 </motion.div>
@@ -131,7 +154,16 @@ export function ProfileSection({ user, isComplete = false }: ProfileSectionProps
                         </div>
                         <div className="space-y-1">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">State</label>
-                            <p className="text-foreground font-medium">Jharkhand</p>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={formData.state || ""}
+                                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                    className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:border-purple-500/50"
+                                />
+                            ) : (
+                                <p className="text-foreground font-medium">{formData.state || "Not provided"}</p>
+                            )}
                         </div>
                         <div className="space-y-1">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">City</label>
@@ -148,7 +180,16 @@ export function ProfileSection({ user, isComplete = false }: ProfileSectionProps
                         </div>
                         <div className="space-y-1">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Address</label>
-                            <p className="text-foreground font-medium">Not provided</p>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={formData.address || ""}
+                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                    className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:border-purple-500/50"
+                                />
+                            ) : (
+                                <p className="text-foreground font-medium">{formData.address || "Not provided"}</p>
+                            )}
                         </div>
                     </div>
                 </motion.div>
