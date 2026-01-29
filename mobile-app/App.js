@@ -37,7 +37,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from './src/firebase';
 import WorkerHomeScreen from './src/screens/WorkerHomeScreen';
-import AdminHomeScreen from './src/screens/AdminHomeScreen';
+import AdminNavigation from './src/screens/AdminNavigation';
 
 const PRIORITIES = ['Low', 'Medium', 'High'];
 const WORKER_SKILLS = [
@@ -492,7 +492,7 @@ export default function App() {
   if (userRole === 'ADMIN') {
     return (
       <SafeAreaProvider>
-        <AdminHomeScreen currentUser={user} />
+        <AdminNavigation currentUser={user} />
       </SafeAreaProvider>
     );
   }
