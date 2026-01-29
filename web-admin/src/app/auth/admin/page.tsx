@@ -3,6 +3,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Loader2, Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
 
@@ -20,10 +23,28 @@ export default function AdminLoginPage() {
         setError(null);
         setLoading(true);
 
-        // Bypass Auth
-        setTimeout(() => {
+        if (!auth || !db) {
+            setError("System Error: Firebase not configured.");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            const userRef = doc(db, "users", auth.currentUser?.uid || "");
+            const userSnap = await getDoc(userRef);
+            const role = userSnap.data()?.role;
+            if (role !== "ADMIN") {
+                setError("Access Denied: Admin privileges required.");
+                await signOut(auth);
+                setLoading(false);
+                return;
+            }
             router.push("/dashboard/admin");
-        }, 800);
+        } catch (err) {
+            setError("The email or password you entered is incorrect.");
+            setLoading(false);
+        }
     };
 
     return (

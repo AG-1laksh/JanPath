@@ -14,6 +14,9 @@ import {
     Activity
 } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+import { useEffect, useMemo, useState } from "react";
+import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const ADMIN_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard/admin" },
@@ -22,22 +25,58 @@ const ADMIN_SIDEBAR_ITEMS = [
     { icon: Users, label: "Workers", href: "/dashboard/admin/workers" },
 ];
 
-const ADMIN_STATS = [
-    { label: "Total Grievances", value: "1,284", icon: FileText, color: "purple", trend: "+12.5%", trendUp: true },
-    { label: "Pending Resolution", value: "342", icon: AlertTriangle, color: "rose", trend: "+4.2%", trendUp: false },
-    { label: "Resolved This Week", value: "856", icon: CheckCircle, color: "emerald", trend: "+18.2%", trendUp: true },
-    { label: "Avg Response Time", value: "4.2 hrs", icon: Activity, color: "blue", trend: "-1.5 hrs", trendUp: true },
-];
-
-const RECENT_ACTIVITY = [
-    { id: "1", title: "New Grievance Report", description: "Water supply issue in Sector 4", time: "2 min ago", status: "pending" as const },
-    { id: "2", title: "Worker Assigned", description: "Ramesh assigned to Road Repair", time: "15 min ago", status: "in-progress" as const },
-    { id: "3", title: "Grievance Resolved", description: "Street light fixed in Block C", time: "1 hour ago", status: "resolved" as const },
-    { id: "4", title: "System Update", description: "Maintenance scheduled for tonight", time: "3 hours ago" },
-];
+type StatusLog = {
+    id: string;
+    status?: string;
+    remarks?: string;
+    timestamp?: any;
+};
 
 export default function AdminDashboard() {
     const { t } = useSettings();
+    const [grievances, setGrievances] = useState<any[]>([]);
+    const [logs, setLogs] = useState<StatusLog[]>([]);
+
+    useEffect(() => {
+        if (!db) return;
+        const grievancesQuery = query(collection(db, "grievances"), orderBy("createdAt", "desc"));
+        const unsubscribe = onSnapshot(grievancesQuery, (snapshot) => {
+            setGrievances(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        });
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (!db) return;
+        const logsQuery = query(collection(db, "statusLogs"), orderBy("timestamp", "desc"), limit(6));
+        const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
+            setLogs(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const stats = useMemo(() => {
+        const total = grievances.length;
+        const pending = grievances.filter((g) => g.status === "Submitted" || g.status === "Assigned" || g.status === "In Progress").length;
+        const resolved = grievances.filter((g) => g.status === "Resolved").length;
+        const avgResponse = "-";
+        return [
+            { label: "Total Grievances", value: total.toString(), icon: FileText, color: "purple" },
+            { label: "Pending Resolution", value: pending.toString(), icon: AlertTriangle, color: "rose" },
+            { label: "Resolved", value: resolved.toString(), icon: CheckCircle, color: "emerald" },
+            { label: "Avg Response Time", value: avgResponse, icon: Activity, color: "blue" },
+        ];
+    }, [grievances]);
+
+    const recentActivity = useMemo(() => {
+        return logs.map((log) => ({
+            id: log.id,
+            title: log.status || "Status Update",
+            description: log.remarks || "",
+            time: log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : "Just now",
+            status: (log.status || "pending") as any,
+        }));
+    }, [logs]);
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
@@ -50,7 +89,7 @@ export default function AdminDashboard() {
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {ADMIN_STATS.map((stat, i) => (
+                    {stats.map((stat, i) => (
                         <StatCard key={i} {...stat} label={t(stat.label)} delay={i * 0.1} />
                     ))}
                 </div>
@@ -71,7 +110,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="lg:col-span-1">
-                        <RecentActivity items={RECENT_ACTIVITY} />
+                        <RecentActivity items={recentActivity} />
                     </div>
                 </div>
             </main>

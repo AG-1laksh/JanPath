@@ -17,8 +17,10 @@ import {
     UserCheck,
     MoreVertical
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const ADMIN_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard/admin" },
@@ -27,86 +29,48 @@ const ADMIN_SIDEBAR_ITEMS = [
     { icon: Users, label: "Workers", href: "/dashboard/admin/workers" },
 ];
 
-const GRIEVANCE_STATS = [
-    { label: "Total Grievances", value: "1,284", icon: FileText, color: "purple", trend: "+12.5%", trendUp: true },
-    { label: "Pending", value: "342", icon: Clock, color: "yellow", trend: "+4.2%", trendUp: false },
-    { label: "Resolved", value: "856", icon: CheckCircle, color: "emerald", trend: "+18.2%", trendUp: true },
-    { label: "Rejected", value: "86", icon: XCircle, color: "rose", trend: "-2.1%", trendUp: true },
-];
-
-interface Grievance {
+type Grievance = {
     id: string;
-    title: string;
-    citizen: string;
-    category: string;
-    status: "pending" | "in-progress" | "resolved" | "rejected";
-    priority: "high" | "medium" | "low";
-    assignedTo?: string;
-    createdAt: string;
-    location: string;
-}
-
-const MOCK_GRIEVANCES: Grievance[] = [
-    {
-        id: "GRV-4021",
-        title: "Potholes on Main Road causing accidents",
-        citizen: "Rahul Sharma",
-        category: "Infrastructure",
-        status: "pending",
-        priority: "high",
-        createdAt: "2 hours ago",
-        location: "Sector 4, Main Road"
-    },
-    {
-        id: "GRV-4020",
-        title: "Street lights not working in residential area",
-        citizen: "Priya Patel",
-        category: "Electricity",
-        status: "in-progress",
-        priority: "medium",
-        assignedTo: "Worker #EMP-8024",
-        createdAt: "5 hours ago",
-        location: "Sector 7, Block B"
-    },
-    {
-        id: "GRV-4019",
-        title: "Water supply issue - No water for 3 days",
-        citizen: "Amit Kumar",
-        category: "Water Supply",
-        status: "resolved",
-        priority: "high",
-        assignedTo: "Worker #EMP-4921",
-        createdAt: "1 day ago",
-        location: "Sector 2, Colony"
-    },
-    {
-        id: "GRV-4018",
-        title: "Garbage not collected for a week",
-        citizen: "Sunita Reddy",
-        category: "Sanitation",
-        status: "in-progress",
-        priority: "medium",
-        assignedTo: "Worker #EMP-7832",
-        createdAt: "1 day ago",
-        location: "Sector 9, Street 5"
-    },
-    {
-        id: "GRV-4017",
-        title: "Duplicate report - Already filed",
-        citizen: "Vijay Singh",
-        category: "Infrastructure",
-        status: "rejected",
-        priority: "low",
-        createdAt: "2 days ago",
-        location: "Sector 4, Main Road"
-    },
-];
+    title?: string;
+    category?: string;
+    status?: string;
+    priority?: string;
+    assignedWorkerId?: string | null;
+    createdAt?: any;
+    location?: { address?: string } | null;
+    userId?: string;
+};
 
 export default function GrievancesPage() {
     const { t } = useSettings();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
+    const [grievances, setGrievances] = useState<Grievance[]>([]);
+    const [userMap, setUserMap] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        if (!db) return;
+        const grievancesQuery = query(collection(db, "grievances"), orderBy("createdAt", "desc"));
+        const unsubscribe = onSnapshot(grievancesQuery, (snapshot) => {
+            setGrievances(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })) as Grievance[]);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (!db) return;
+        const usersQuery = query(collection(db, "users"));
+        const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+            const map: Record<string, string> = {};
+            snapshot.docs.forEach((docSnap) => {
+                const data = docSnap.data() as any;
+                map[docSnap.id] = data?.name || data?.email || docSnap.id;
+            });
+            setUserMap(map);
+        });
+        return () => unsubscribe();
+    }, []);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -127,14 +91,44 @@ export default function GrievancesPage() {
         }
     };
 
-    const filteredGrievances = MOCK_GRIEVANCES.filter(grievance => {
-        const matchesSearch = grievance.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            grievance.citizen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            grievance.id.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === "all" || grievance.status === statusFilter;
-        const matchesPriority = priorityFilter === "all" || grievance.priority === priorityFilter;
-        return matchesSearch && matchesStatus && matchesPriority;
-    });
+    const normalizeStatus = (status?: string) => {
+        if (!status) return "pending";
+        if (status === "Resolved" || status === "Closed") return "resolved";
+        if (status === "Rejected") return "rejected";
+        if (status === "In Progress") return "in-progress";
+        return "pending";
+    };
+
+    const normalizePriority = (priority?: string) => {
+        if (!priority) return "low";
+        return priority.toLowerCase();
+    };
+
+    const filteredGrievances = useMemo(() => {
+        return grievances.filter((grievance) => {
+            const citizenName = grievance.userId ? userMap[grievance.userId] || grievance.userId : "";
+            const title = grievance.title || "";
+            const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                citizenName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                grievance.id.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = statusFilter === "all" || normalizeStatus(grievance.status) === statusFilter;
+            const matchesPriority = priorityFilter === "all" || normalizePriority(grievance.priority) === priorityFilter;
+            return matchesSearch && matchesStatus && matchesPriority;
+        });
+    }, [grievances, searchTerm, statusFilter, priorityFilter, userMap]);
+
+    const grievanceStats = useMemo(() => {
+        const total = grievances.length;
+        const pending = grievances.filter((g) => normalizeStatus(g.status) === "pending" || normalizeStatus(g.status) === "in-progress").length;
+        const resolved = grievances.filter((g) => normalizeStatus(g.status) === "resolved").length;
+        const rejected = grievances.filter((g) => normalizeStatus(g.status) === "rejected").length;
+        return [
+            { label: "Total Grievances", value: total.toString(), icon: FileText, color: "purple" },
+            { label: "Pending", value: pending.toString(), icon: Clock, color: "yellow" },
+            { label: "Resolved", value: resolved.toString(), icon: CheckCircle, color: "emerald" },
+            { label: "Rejected", value: rejected.toString(), icon: XCircle, color: "rose" },
+        ];
+    }, [grievances]);
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#050505]">
@@ -148,7 +142,7 @@ export default function GrievancesPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {GRIEVANCE_STATS.map((stat, i) => (
+                    {grievanceStats.map((stat, i) => (
                         <StatCard key={i} {...stat} label={t(stat.label)} delay={i * 0.1} />
                     ))}
                 </div>
@@ -223,28 +217,34 @@ export default function GrievancesPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div>
-                                                <div className="text-white font-medium mb-1">{grievance.title}</div>
-                                                <div className="text-xs text-slate-500">{grievance.location}</div>
+                                                <div className="text-white font-medium mb-1">{grievance.title || "Untitled"}</div>
+                                                <div className="text-xs text-slate-500">{grievance.location?.address || ""}</div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-300">{grievance.citizen}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm text-slate-400">{t(grievance.category)}</span>
+                                        <td className="px-6 py-4 text-slate-300">
+                                            {grievance.userId ? userMap[grievance.userId] || grievance.userId : "-"}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`text-sm font-medium capitalize ${getPriorityColor(grievance.priority)}`}>
-                                                {t(grievance.priority.charAt(0).toUpperCase() + grievance.priority.slice(1))}
+                                            <span className="text-sm text-slate-400">{t(grievance.category || "General")}</span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`text-sm font-medium capitalize ${getPriorityColor(normalizePriority(grievance.priority))}`}>
+                                                {t(normalizePriority(grievance.priority).charAt(0).toUpperCase() + normalizePriority(grievance.priority).slice(1))}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${getStatusColor(grievance.status)}`}>
-                                                {grievance.status === 'in-progress' ? t("In Progress") : t(grievance.status.charAt(0).toUpperCase() + grievance.status.slice(1))}
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${getStatusColor(normalizeStatus(grievance.status))}`}>
+                                                {normalizeStatus(grievance.status) === 'in-progress' ? t("In Progress") : t(normalizeStatus(grievance.status).charAt(0).toUpperCase() + normalizeStatus(grievance.status).slice(1))}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-300 text-sm">
-                                            {grievance.assignedTo || <span className="text-slate-600">{t("Not assigned")}</span>}
+                                            {grievance.assignedWorkerId
+                                                ? userMap[grievance.assignedWorkerId] || grievance.assignedWorkerId
+                                                : <span className="text-slate-600">{t("Not assigned")}</span>}
                                         </td>
-                                        <td className="px-6 py-4 text-slate-400 text-sm">{grievance.createdAt}</td>
+                                        <td className="px-6 py-4 text-slate-400 text-sm">
+                                            {grievance.createdAt?.toDate ? grievance.createdAt.toDate().toLocaleString() : "-"}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex gap-2">
                                                 <button className="p-2 hover:bg-white/10 rounded-lg transition-colors group">

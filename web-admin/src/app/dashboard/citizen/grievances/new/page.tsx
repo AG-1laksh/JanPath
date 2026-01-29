@@ -17,9 +17,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/context/SettingsContext";
+import { useAuth } from "@/context/AuthContext";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const CITIZEN_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard/citizen" },
@@ -34,17 +37,29 @@ export default function NewGrievancePage() {
     const { t } = useSettings();
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageBase64, setImageBase64] = useState<string | null>(null);
     const [category, setCategory] = useState("Sanitation");
     const [location, setLocation] = useState("Detecting location...");
+    const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [description, setDescription] = useState("");
 
-    // Mock Location Detection
-    useState(() => {
-        setTimeout(() => {
-            setLocation("Sector 4, Bokaro Steel City");
-        }, 1500);
-    });
+    useEffect(() => {
+        if (!navigator.geolocation) {
+            setLocation("Location unavailable");
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+                setLocation(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+            },
+            () => setLocation("Location unavailable"),
+            { enableHighAccuracy: true, timeout: 8000 }
+        );
+    }, []);
 
     const handleCameraClick = () => {
         fileInputRef.current?.click();
@@ -56,19 +71,37 @@ export default function NewGrievancePage() {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result as string);
+                const result = reader.result as string;
+                const base64 = result.includes(",") ? result.split(",")[1] : result;
+                setImageBase64(base64);
             };
             reader.readAsDataURL(file);
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate submission
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            if (!db || !user) throw new Error("Not authenticated");
+
+            await addDoc(collection(db, "grievances"), {
+                title: category,
+                description,
+                category,
+                priority: "Medium",
+                status: "Submitted",
+                imageBase64: imageBase64 || "",
+                location: coords ? { ...coords, address: location } : { address: location },
+                userId: user.uid,
+                assignedWorkerId: null,
+                createdAt: serverTimestamp(),
+            });
+
             router.push("/dashboard/citizen/grievances");
-        }, 1500);
+        } catch {
+            setLoading(false);
+        }
     };
 
     return (
@@ -117,6 +150,8 @@ export default function NewGrievancePage() {
                                 <textarea
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all min-h-[120px]"
                                     placeholder="Describe the issue in detail..."
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
                                     required
                                 />
                             </div>

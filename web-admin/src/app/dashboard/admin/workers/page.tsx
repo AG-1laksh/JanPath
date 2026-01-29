@@ -20,7 +20,9 @@ import {
     Award,
     Activity
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const ADMIN_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard/admin" },
@@ -29,133 +31,45 @@ const ADMIN_SIDEBAR_ITEMS = [
     { icon: Users, label: "Workers", href: "/dashboard/admin/workers" },
 ];
 
-const WORKER_STATS = [
-    { label: "Total Workers", value: "248", icon: Users, color: "purple", trend: "+12", trendUp: true },
-    { label: "Active Workers", value: "192", icon: UserCheck, color: "emerald", trend: "+8", trendUp: true },
-    { label: "Tasks Completed", value: "1,456", icon: CheckCircle, color: "blue", trend: "+28.4%", trendUp: true },
-    { label: "Avg Completion Time", value: "6.8 hrs", icon: Clock, color: "yellow", trend: "-1.2 hrs", trendUp: true },
-];
-
 interface Worker {
     id: string;
-    empId: string;
-    name: string;
-    email: string;
-    phone: string;
-    department: string;
-    specialization: string;
-    status: "active" | "on-leave" | "inactive";
-    assignedTasks: number;
-    completedTasks: number;
-    rating: number;
-    efficiency: number;
-    joinedAt: string;
-    lastActive: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    department?: string;
+    status?: "active" | "on-leave" | "inactive";
+    assignedTasks?: number;
+    completedTasks?: number;
+    rating?: number;
+    efficiency?: number;
+    joinedAt?: string;
+    lastActive?: string;
 }
-
-const MOCK_WORKERS: Worker[] = [
-    {
-        id: "WRK-001",
-        empId: "EMP-8024",
-        name: "Rajesh Kumar Singh",
-        email: "rajesh.singh@janpath.gov",
-        phone: "+91 98765 11111",
-        department: "Infrastructure",
-        specialization: "Road Maintenance",
-        status: "active",
-        assignedTasks: 5,
-        completedTasks: 142,
-        rating: 4.8,
-        efficiency: 94,
-        joinedAt: "Mar 15, 2024",
-        lastActive: "2 hours ago"
-    },
-    {
-        id: "WRK-002",
-        empId: "EMP-4921",
-        name: "Pradeep Sharma",
-        email: "pradeep.sharma@janpath.gov",
-        phone: "+91 98765 22222",
-        department: "Water Supply",
-        specialization: "Plumbing & Pipelines",
-        status: "active",
-        assignedTasks: 3,
-        completedTasks: 198,
-        rating: 4.9,
-        efficiency: 96,
-        joinedAt: "Jan 10, 2024",
-        lastActive: "1 hour ago"
-    },
-    {
-        id: "WRK-003",
-        empId: "EMP-7832",
-        name: "Suresh Patel",
-        email: "suresh.patel@janpath.gov",
-        phone: "+91 98765 33333",
-        department: "Sanitation",
-        specialization: "Waste Management",
-        status: "active",
-        assignedTasks: 7,
-        completedTasks: 256,
-        rating: 4.7,
-        efficiency: 92,
-        joinedAt: "Feb 5, 2024",
-        lastActive: "30 mins ago"
-    },
-    {
-        id: "WRK-004",
-        empId: "EMP-5643",
-        name: "Manoj Kumar",
-        email: "manoj.kumar@janpath.gov",
-        phone: "+91 98765 44444",
-        department: "Electricity",
-        specialization: "Electrical Works",
-        status: "on-leave",
-        assignedTasks: 0,
-        completedTasks: 178,
-        rating: 4.6,
-        efficiency: 89,
-        joinedAt: "Apr 20, 2024",
-        lastActive: "3 days ago"
-    },
-    {
-        id: "WRK-005",
-        empId: "EMP-9821",
-        name: "Vikram Reddy",
-        email: "vikram.reddy@janpath.gov",
-        phone: "+91 98765 55555",
-        department: "Infrastructure",
-        specialization: "Construction",
-        status: "active",
-        assignedTasks: 4,
-        completedTasks: 134,
-        rating: 4.5,
-        efficiency: 88,
-        joinedAt: "May 12, 2024",
-        lastActive: "5 hours ago"
-    },
-    {
-        id: "WRK-006",
-        empId: "EMP-3456",
-        name: "Anil Verma",
-        email: "anil.verma@janpath.gov",
-        phone: "+91 98765 66666",
-        department: "Parks & Gardens",
-        specialization: "Landscape Maintenance",
-        status: "active",
-        assignedTasks: 2,
-        completedTasks: 167,
-        rating: 4.7,
-        efficiency: 91,
-        joinedAt: "Mar 28, 2024",
-        lastActive: "Yesterday"
-    },
-];
 
 export default function WorkersPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+    const [workers, setWorkers] = useState<Worker[]>([]);
+    const [grievances, setGrievances] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!db) return;
+        const workersQuery = query(collection(db, "users"), where("role", "==", "WORKER"));
+        const unsubscribe = onSnapshot(workersQuery, (snapshot) => {
+            setWorkers(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })) as Worker[]);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (!db) return;
+        const grievancesQuery = query(collection(db, "grievances"), orderBy("createdAt", "desc"));
+        const unsubscribe = onSnapshot(grievancesQuery, (snapshot) => {
+            setGrievances(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        });
+        return () => unsubscribe();
+    }, []);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -173,17 +87,44 @@ export default function WorkersPage() {
         return "text-rose-400";
     };
 
-    const filteredWorkers = MOCK_WORKERS.filter(worker => {
-        const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            worker.empId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            worker.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            worker.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const enrichedWorkers = useMemo(() => {
+        const activeAssignments = grievances.filter((g) => g.status !== "Resolved" && g.status !== "Closed");
+        const completedAssignments = grievances.filter((g) => g.status === "Resolved" || g.status === "Closed");
+
+        return workers.map((worker) => {
+            const assigned = activeAssignments.filter((g) => g.assignedWorkerId === worker.id).length;
+            const completed = completedAssignments.filter((g) => g.assignedWorkerId === worker.id).length;
+            return {
+                ...worker,
+                assignedTasks: assigned,
+                completedTasks: completed,
+                status: worker.status || (assigned > 0 ? "active" : "inactive"),
+            };
+        });
+    }, [grievances, workers]);
+
+    const filteredWorkers = enrichedWorkers.filter(worker => {
+        const matchesSearch = (worker.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (worker.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (worker.department || "").toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === "all" || worker.status === statusFilter;
         const matchesDepartment = departmentFilter === "all" || worker.department === departmentFilter;
         return matchesSearch && matchesStatus && matchesDepartment;
     });
 
-    const departments = Array.from(new Set(MOCK_WORKERS.map(w => w.department)));
+    const departments = Array.from(new Set(enrichedWorkers.map(w => w.department).filter(Boolean))) as string[];
+
+    const workerStats = useMemo(() => {
+        const total = workers.length;
+        const active = enrichedWorkers.filter((w) => w.status === "active").length;
+        const completed = grievances.filter((g) => g.status === "Resolved" || g.status === "Closed").length;
+        return [
+            { label: "Total Workers", value: total.toString(), icon: Users, color: "purple" },
+            { label: "Active Workers", value: active.toString(), icon: UserCheck, color: "emerald" },
+            { label: "Tasks Completed", value: completed.toString(), icon: CheckCircle, color: "blue" },
+            { label: "Avg Completion Time", value: "-", icon: Clock, color: "yellow" },
+        ];
+    }, [enrichedWorkers, grievances, workers.length]);
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#050505]">
@@ -197,7 +138,7 @@ export default function WorkersPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {WORKER_STATS.map((stat, i) => (
+                    {workerStats.map((stat, i) => (
                         <StatCard key={i} {...stat} delay={i * 0.1} />
                     ))}
                 </div>
@@ -210,7 +151,7 @@ export default function WorkersPage() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                             <input
                                 type="text"
-                                placeholder="Search by name, EMP ID, or department..."
+                                placeholder="Search by name, email, or department..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500/50"
@@ -254,11 +195,11 @@ export default function WorkersPage() {
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-lg">
-                                        {worker.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                        {(worker.name || "W").split(' ').map(n => n[0]).join('').slice(0, 2)}
                                     </div>
                                     <div>
-                                        <h3 className="text-white font-semibold">{worker.name}</h3>
-                                        <p className="text-xs text-slate-500 font-mono">{worker.empId}</p>
+                                        <h3 className="text-white font-semibold">{worker.name || "Worker"}</h3>
+                                        <p className="text-xs text-slate-500 font-mono">{worker.id}</p>
                                         <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium border capitalize ${getStatusColor(worker.status)}`}>
                                             {worker.status}
                                         </span>
@@ -273,20 +214,19 @@ export default function WorkersPage() {
                             <div className="mb-4 p-3 bg-white/5 rounded-xl">
                                 <div className="flex items-center gap-2 mb-1">
                                     <Briefcase size={14} className="text-purple-400" />
-                                    <span className="text-sm font-medium text-purple-400">{worker.department}</span>
+                                    <span className="text-sm font-medium text-purple-400">{worker.department || "-"}</span>
                                 </div>
-                                <div className="text-xs text-slate-400 ml-6">{worker.specialization}</div>
                             </div>
 
                             {/* Contact Info */}
                             <div className="space-y-2 mb-4">
                                 <div className="flex items-center gap-2 text-sm">
                                     <Mail size={14} className="text-slate-500" />
-                                    <span className="text-slate-300 truncate">{worker.email}</span>
+                                    <span className="text-slate-300 truncate">{worker.email || "-"}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                     <Phone size={14} className="text-slate-500" />
-                                    <span className="text-slate-300">{worker.phone}</span>
+                                    <span className="text-slate-300">{worker.phone || "-"}</span>
                                 </div>
                             </div>
 
@@ -294,18 +234,18 @@ export default function WorkersPage() {
                             <div className="grid grid-cols-3 gap-3 mb-4">
                                 <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
                                     <div className="text-xs text-blue-400 mb-1">Assigned</div>
-                                    <div className="text-lg font-semibold text-white">{worker.assignedTasks}</div>
+                                    <div className="text-lg font-semibold text-white">{worker.assignedTasks || 0}</div>
                                 </div>
                                 <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
                                     <div className="text-xs text-emerald-400 mb-1">Completed</div>
-                                    <div className="text-lg font-semibold text-white">{worker.completedTasks}</div>
+                                    <div className="text-lg font-semibold text-white">{worker.completedTasks || 0}</div>
                                 </div>
                                 <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
                                     <div className="text-xs text-purple-400 mb-1 flex items-center gap-1">
                                         <Award size={12} />
                                         Rating
                                     </div>
-                                    <div className="text-lg font-semibold text-white">{worker.rating}</div>
+                                    <div className="text-lg font-semibold text-white">{worker.rating || 0}</div>
                                 </div>
                             </div>
 
@@ -316,17 +256,17 @@ export default function WorkersPage() {
                                         <Activity size={12} />
                                         Efficiency
                                     </span>
-                                    <span className={`text-sm font-semibold ${getEfficiencyColor(worker.efficiency)}`}>
-                                        {worker.efficiency}%
+                                    <span className={`text-sm font-semibold ${getEfficiencyColor(worker.efficiency || 0)}`}>
+                                        {worker.efficiency || 0}%
                                     </span>
                                 </div>
                                 <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full ${worker.efficiency >= 90 ? 'bg-emerald-500' :
-                                                worker.efficiency >= 75 ? 'bg-blue-500' :
-                                                    worker.efficiency >= 60 ? 'bg-yellow-500' : 'bg-rose-500'
+                                        className={`h-full ${(worker.efficiency || 0) >= 90 ? 'bg-emerald-500' :
+                                                (worker.efficiency || 0) >= 75 ? 'bg-blue-500' :
+                                                    (worker.efficiency || 0) >= 60 ? 'bg-yellow-500' : 'bg-rose-500'
                                             } rounded-full transition-all duration-500`}
-                                        style={{ width: `${worker.efficiency}%` }}
+                                        style={{ width: `${worker.efficiency || 0}%` }}
                                     />
                                 </div>
                             </div>
@@ -334,7 +274,7 @@ export default function WorkersPage() {
                             {/* Footer */}
                             <div className="flex items-center justify-between pt-4 border-t border-white/5">
                                 <div className="text-xs text-slate-500">
-                                    Joined {worker.joinedAt}
+                                    Joined {worker.joinedAt || "-"}
                                 </div>
                                 <div className="flex gap-1">
                                     <button className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors text-xs text-purple-400 font-medium">

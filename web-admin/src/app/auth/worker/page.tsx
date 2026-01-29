@@ -3,12 +3,15 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Loader2, BadgeCheck, HardHat, Hammer, MapPin, AlertCircle } from "lucide-react";
 
 export default function WorkerLogin() {
     const router = useRouter();
-    const [workerId, setWorkerId] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -18,10 +21,28 @@ export default function WorkerLogin() {
         setError(null);
         setLoading(true);
 
-        // Bypass Auth
-        setTimeout(() => {
+        if (!auth || !db) {
+            setError("System Error: Firebase not configured.");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            const userRef = doc(db, "users", auth.currentUser?.uid || "");
+            const userSnap = await getDoc(userRef);
+            const role = userSnap.data()?.role;
+            if (role !== "WORKER") {
+                setError("Access Denied: Worker privileges required.");
+                await signOut(auth);
+                setLoading(false);
+                return;
+            }
             router.push("/dashboard/worker");
-        }, 800);
+        } catch (err) {
+            setError("The email or password you entered is incorrect.");
+            setLoading(false);
+        }
     };
 
     return (
@@ -80,15 +101,15 @@ export default function WorkerLogin() {
 
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Worker ID</label>
+                                    <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Email Address</label>
                                     <div className="relative group/input">
                                         <BadgeCheck className="absolute left-4 top-3.5 text-muted-foreground group-focus-within/input:text-emerald-400 transition-colors" size={18} />
                                         <input
-                                            type="text"
-                                            value={workerId}
-                                            onChange={(e) => setWorkerId(e.target.value)}
-                                            placeholder="EMP-8024"
-                                            className="w-full bg-muted border border-border rounded-xl px-12 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all uppercase"
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="worker@janpath.gov"
+                                            className="w-full bg-muted border border-border rounded-xl px-12 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
                                             required
                                         />
                                     </div>

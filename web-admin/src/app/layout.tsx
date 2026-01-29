@@ -1,4 +1,5 @@
 import { SettingsProvider } from "@/context/SettingsContext";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 export const metadata = {
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <SettingsProvider>{children}</SettingsProvider>
+        <SettingsProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

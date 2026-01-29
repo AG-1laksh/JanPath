@@ -19,6 +19,10 @@ import {
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSettings } from "@/context/SettingsContext";
+import { useAuth } from "@/context/AuthContext";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useEffect, useMemo, useState } from "react";
 
 const CITIZEN_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard/citizen" },
@@ -29,38 +33,41 @@ const CITIZEN_SIDEBAR_ITEMS = [
     { icon: BarChart, label: "Reports", href: "/dashboard/citizen/reports" },
 ];
 
-const MOCK_GRIEVANCES = [
-    {
-        id: "GRV-2024-001",
-        category: "Sanitation",
-        title: "Garbage Pileup at Sector 4 Market",
-        status: "Pending",
-        date: "29 Jan 2026",
-        location: "Sector 4, Bokaro",
-        description: "Large pile of garbage has been accumulating for 3 days."
-    },
-    {
-        id: "GRV-2024-002",
-        category: "Roads",
-        title: "Deep Pothole near School Entrance",
-        status: "In Progress",
-        date: "25 Jan 2026",
-        location: "Main Road, Dhanbad",
-        description: "Dangerous pothole causing traffic issues."
-    },
-    {
-        id: "GRV-2023-089",
-        category: "Street Lights",
-        title: "Street Light Malfunction",
-        status: "Resolved",
-        date: "10 Jan 2026",
-        location: "Lane 5, Ranchi",
-        description: "Street light #402 blinking continuously."
-    }
-];
+type CitizenGrievance = {
+    id: string;
+    category?: string;
+    title?: string;
+    status?: string;
+    createdAt?: any;
+    location?: { address?: string } | null;
+    description?: string;
+};
 
 export default function CitizenGrievances() {
     const { t } = useSettings();
+    const { user } = useAuth();
+    const [grievances, setGrievances] = useState<CitizenGrievance[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    useEffect(() => {
+        if (!db || !user) return;
+        const grievancesQuery = query(
+            collection(db, "grievances"),
+            where("userId", "==", user.uid),
+            orderBy("createdAt", "desc")
+        );
+        const unsubscribe = onSnapshot(grievancesQuery, (snapshot) => {
+            setGrievances(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })) as CitizenGrievance[]);
+        });
+        return () => unsubscribe();
+    }, [user]);
+
+    const filteredGrievances = useMemo(() => {
+        return grievances.filter((grievance) => {
+            const title = grievance.title || "";
+            return title.toLowerCase().includes(searchTerm.toLowerCase()) || grievance.id.toLowerCase().includes(searchTerm.toLowerCase());
+        });
+    }, [grievances, searchTerm]);
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             <Sidebar items={CITIZEN_SIDEBAR_ITEMS} userType="citizen" />
@@ -77,6 +84,8 @@ export default function CitizenGrievances() {
                             <input
                                 type="text"
                                 placeholder={t("Search grievance ID or title...")}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all"
                             />
                         </div>
@@ -99,7 +108,7 @@ export default function CitizenGrievances() {
 
                 {/* Grievances List */}
                 <div className="grid gap-4">
-                    {MOCK_GRIEVANCES.map((grievance, index) => (
+                    {filteredGrievances.map((grievance, index) => (
                         <motion.div
                             key={grievance.id}
                             initial={{ opacity: 0, y: 20 }}
@@ -118,10 +127,10 @@ export default function CitizenGrievances() {
                                                 {grievance.id}
                                             </span>
                                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${grievance.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                    grievance.status === 'In Progress' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                    grievance.status === 'In Progress' || grievance.status === 'Assigned' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                                         'bg-orange-500/10 text-orange-400 border-orange-500/20'
                                                 }`}>
-                                                {grievance.status}
+                                                {grievance.status || "Pending"}
                                             </span>
                                         </div>
                                         <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">{grievance.title}</h3>
@@ -131,11 +140,11 @@ export default function CitizenGrievances() {
                                 <div className="flex items-center gap-6 text-sm text-slate-500">
                                     <div className="flex items-center gap-1.5">
                                         <Calendar size={14} />
-                                        {grievance.date}
+                                        {grievance.createdAt?.toDate ? grievance.createdAt.toDate().toLocaleDateString() : "-"}
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <MapPin size={14} />
-                                        {grievance.location}
+                                        {grievance.location?.address || "-"}
                                     </div>
                                     <button className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
                                         <ArrowRight size={20} />
