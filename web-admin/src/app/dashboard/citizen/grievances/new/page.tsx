@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSettings } from "@/context/SettingsContext";
 
 const CITIZEN_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard/citizen" },
@@ -30,6 +31,7 @@ const CITIZEN_SIDEBAR_ITEMS = [
 ];
 
 export default function NewGrievancePage() {
+    const { t } = useSettings();
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
@@ -91,9 +93,9 @@ export default function NewGrievancePage() {
 
                             {/* Category Selection */}
                             <div className="space-y-2">
-                                <label className="text-xs font-medium text-slate-300 ml-1 uppercase tracking-wider">Category</label>
+                                <label className="text-xs font-medium text-slate-300 ml-1 uppercase tracking-wider">{t("Type of Worker Needed / Category")}</label>
                                 <div className="grid grid-cols-2 gap-3">
-                                    {["Sanitation", "Roads", "Water Supply", "Street Lights", "Drainage", "Others"].map((cat) => (
+                                    {["Electricity", "Water Supply", "Infrastructure", "Sanitation", "Drainage", "Others"].map((cat) => (
                                         <button
                                             key={cat}
                                             type="button"
@@ -103,7 +105,7 @@ export default function NewGrievancePage() {
                                                     : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
                                                 }`}
                                         >
-                                            {cat}
+                                            {t(cat)}
                                         </button>
                                     ))}
                                 </div>

@@ -61,8 +61,11 @@ export function Sidebar({ items, userType }: SidebarProps) {
             >
                 {/* Brand */}
                 <div className="p-6 border-b border-sidebar-border">
-                    <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                        Janpath <span className="text-muted-foreground opacity-50 capitalize">{t(userType)}</span>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        <span className="text-orange-500">JAN</span>
+                        <span className="text-white">P</span>
+                        <span className="text-green-500">ATH</span>
+                        <span className="text-muted-foreground opacity-50 capitalize ml-2">{t(userType)}</span>
                     </h1>
                 </div>
 

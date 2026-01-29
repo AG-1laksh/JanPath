@@ -18,6 +18,7 @@ import {
     MoreVertical
 } from "lucide-react";
 import { useState } from "react";
+import { useSettings } from "@/context/SettingsContext";
 
 const ADMIN_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard/admin" },
@@ -102,6 +103,7 @@ const MOCK_GRIEVANCES: Grievance[] = [
 ];
 
 export default function GrievancesPage() {
+    const { t } = useSettings();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -140,14 +142,14 @@ export default function GrievancesPage() {
 
             <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header
-                    title="Grievance Management"
-                    description="Manage and monitor all citizen grievances"
+                    title={t("Grievance Management")}
+                    description={t("Manage and monitor all citizen grievances")}
                 />
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {GRIEVANCE_STATS.map((stat, i) => (
-                        <StatCard key={i} {...stat} delay={i * 0.1} />
+                        <StatCard key={i} {...stat} label={t(stat.label)} delay={i * 0.1} />
                     ))}
                 </div>
 
@@ -159,7 +161,7 @@ export default function GrievancesPage() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                             <input
                                 type="text"
-                                placeholder="Search by ID, title, or citizen name..."
+                                placeholder={t("Search by ID, title, or citizen name...")}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500/50"
@@ -172,11 +174,11 @@ export default function GrievancesPage() {
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50"
                         >
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="rejected">Rejected</option>
+                            <option value="all">{t("All Status")}</option>
+                            <option value="pending">{t("Pending")}</option>
+                            <option value="in-progress">{t("In Progress")}</option>
+                            <option value="resolved">{t("Resolved")}</option>
+                            <option value="rejected">{t("Rejected")}</option>
                         </select>
 
                         {/* Priority Filter */}
@@ -185,10 +187,10 @@ export default function GrievancesPage() {
                             onChange={(e) => setPriorityFilter(e.target.value)}
                             className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50"
                         >
-                            <option value="all">All Priority</option>
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
+                            <option value="all">{t("All Priority")}</option>
+                            <option value="high">{t("High")}</option>
+                            <option value="medium">{t("Medium")}</option>
+                            <option value="low">{t("Low")}</option>
                         </select>
                     </div>
                 </div>
@@ -199,15 +201,15 @@ export default function GrievancesPage() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-white/10">
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">ID</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">Title</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">Citizen</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">Category</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">Priority</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">Status</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">Assigned To</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">Created</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">Actions</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("ID")}</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("Title")}</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("Citizen")}</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("Category")}</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("Priority")}</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("Status")}</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("Assigned To")}</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("Created")}</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-400">{t("Actions")}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -227,20 +229,20 @@ export default function GrievancesPage() {
                                         </td>
                                         <td className="px-6 py-4 text-slate-300">{grievance.citizen}</td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm text-slate-400">{grievance.category}</span>
+                                            <span className="text-sm text-slate-400">{t(grievance.category)}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`text-sm font-medium capitalize ${getPriorityColor(grievance.priority)}`}>
-                                                {grievance.priority}
+                                                {t(grievance.priority.charAt(0).toUpperCase() + grievance.priority.slice(1))}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${getStatusColor(grievance.status)}`}>
-                                                {grievance.status}
+                                                {grievance.status === 'in-progress' ? t("In Progress") : t(grievance.status.charAt(0).toUpperCase() + grievance.status.slice(1))}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-300 text-sm">
-                                            {grievance.assignedTo || <span className="text-slate-600">Not assigned</span>}
+                                            {grievance.assignedTo || <span className="text-slate-600">{t("Not assigned")}</span>}
                                         </td>
                                         <td className="px-6 py-4 text-slate-400 text-sm">{grievance.createdAt}</td>
                                         <td className="px-6 py-4">
@@ -265,7 +267,7 @@ export default function GrievancesPage() {
                     {filteredGrievances.length === 0 && (
                         <div className="py-12 text-center">
                             <AlertTriangle size={48} className="mx-auto text-slate-700 mb-4" />
-                            <p className="text-slate-400">No grievances found matching your filters</p>
+                            <p className="text-slate-400">{t("No grievances found matching your filters")}</p>
                         </div>
                     )}
                 </div>

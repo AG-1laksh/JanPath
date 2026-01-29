@@ -51,7 +51,7 @@ export default function WorkerDashboard() {
             <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header
                     title={t("Field Dashboard")}
-                    description="Good Morning, Worker EMP-8024. You have 12 active tasks."
+                    description={`${t("Good Morning")}, Worker EMP-8024 | ${t("Department")}: ${t("Infrastructure")}`}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

@@ -54,23 +54,14 @@
   letter-spacing: -0.04em;
   line-height: 0.95;
   position: relative;
-  color: transparent;
-  background-image: linear-gradient(120deg, #ffffff 10%, #b2e5ff 40%, #ff9be6 70%, #d7ff9f 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: shimmer 10s ease-in-out infinite;
 }
 
 .heroTitle::after {
-  content: "JANPATH";
+  content: "";
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
-  color: transparent;
-  text-shadow: 0 0 18px rgba(142, 214, 255, 0.35);
-  mix-blend-mode: screen;
-  animation: glowPulse 6s ease-in-out infinite;
   pointer-events: none;
 }
 

@@ -188,8 +188,10 @@ export default function Page() {
                 <div className="w-2 h-2 bg-pink-400 rounded-full" />
               </div>
             </div>
-            <span className="text-xl font-bold tracking-tight text-white">
-              Janpath
+            <span className="text-xl font-bold tracking-tight">
+              <span className="text-orange-500">JAN</span>
+              <span className="text-white">P</span>
+              <span className="text-green-500">ATH</span>
             </span>
           </div>
 
@@ -212,7 +214,9 @@ export default function Page() {
           </motion.div>
 
           <motion.h1 variants={itemVariants} className={styles.heroTitle}>
-            JANPATH
+            <span className="text-orange-500">JAN</span>
+            <span className="text-white">P</span>
+            <span className="text-green-500">ATH</span>
           </motion.h1>
 
           <motion.p variants={itemVariants} className={styles.subtitle}>

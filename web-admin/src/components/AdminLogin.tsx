@@ -73,8 +73,11 @@ export default function AdminLogin() {
             Secure Admin Gateway
           </div>
 
-          <h1 className="text-5xl font-bold tracking-tight text-white mb-4">
-            Janpath <span className="text-white/40">Admin</span>
+          <h1 className="text-5xl font-bold tracking-tight mb-4">
+            <span className="text-orange-500">JAN</span>
+            <span className="text-white">P</span>
+            <span className="text-green-500">ATH</span>
+            <span className="text-white/40 ml-3">Admin</span>
           </h1>
           <p className="text-lg text-slate-400 max-w-md leading-relaxed mb-8">
             Manage civic grievances, track resolution workflows, and analyze municipal data in real-time.
