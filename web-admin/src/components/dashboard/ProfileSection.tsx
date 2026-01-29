@@ -1,0 +1,158 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Mail, Phone, MapPin, Edit3, Check } from "lucide-react";
+import { useState } from "react";
+
+interface ProfileSectionProps {
+    user: {
+        name: string;
+        email: string;
+        phone: string;
+        role: string;
+        location?: string;
+        joinDate: string;
+        avatarInitials: string;
+    };
+    isComplete?: boolean;
+}
+
+export function ProfileSection({ user, isComplete = false }: ProfileSectionProps) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState(user);
+
+    const handleSave = () => {
+        setIsEditing(false);
+        // Logic to save to backend would go here
+    };
+
+    return (
+        <div className="space-y-6">
+            {!isComplete && !isEditing && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex gap-4 items-start"
+                >
+                    <div className="p-2 rounded-full bg-orange-500/20 text-orange-400 shrink-0">
+                        <span className="font-bold text-lg">!</span>
+                    </div>
+                    <div>
+                        <h4 className="text-orange-200 font-semibold mb-1">Profile Completion Required</h4>
+                        <p className="text-sm text-orange-200/70 mb-3">Please complete your profile with the required information to continue using the application.</p>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs text-orange-300/80">
+                            <span className="flex items-center gap-1">• Name (required)</span>
+                            <span className="flex items-center gap-1">• Email (required)</span>
+                            <span className="flex items-center gap-1">• City (required)</span>
+                            <span className="flex items-center gap-1">• Phone number (optional)</span>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            <div className="grid md:grid-cols-3 gap-6">
+                {/* Avatar Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="md:col-span-1 p-8 rounded-3xl bg-[#0a0a0a] border border-white/10 flex flex-col items-center justify-center text-center relative overflow-hidden group"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    <div className="w-32 h-32 rounded-full bg-[#1a1a1a] flex items-center justify-center text-4xl font-bold text-slate-300 mb-6 border-4 border-[#0a0a0a] shadow-xl relative z-10">
+                        {formData.avatarInitials}
+                    </div>
+
+                    <h3 className="text-xl font-bold text-white mb-1">{formData.name}</h3>
+                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
+                        <Mail size={14} />
+                        {formData.email}
+                    </div>
+
+                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                        {formData.role}
+                    </span>
+
+                    <div className="mt-8 pt-6 border-t border-white/5 w-full">
+                        <p className="text-xs text-slate-600">Member since {formData.joinDate}</p>
+                    </div>
+                </motion.div>
+
+                {/* Details Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="md:col-span-2 p-8 rounded-3xl bg-[#0a0a0a] border border-white/10 relative"
+                >
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-xl font-bold text-white">Profile Information</h3>
+                        <button
+                            onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isEditing
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+                                : "bg-white/5 border border-white/10 hover:bg-white/10 text-white"
+                                }`}
+                        >
+                            {isEditing ? <><Check size={16} /> Save Changes</> : <><Edit3 size={16} /> Edit Profile</>}
+                        </button>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-8">
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Full Name</label>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500/50"
+                                />
+                            ) : (
+                                <p className="text-white font-medium">{formData.name || "Not provided"}</p>
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</label>
+                            <p className="text-slate-400 font-medium cursor-not-allowed">{formData.email}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</label>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500/50"
+                                />
+                            ) : (
+                                <p className="text-white font-medium">{formData.phone || "Not provided"}</p>
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">State</label>
+                            <p className="text-white font-medium">Jharkhand</p>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">City</label>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={formData.location}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500/50"
+                                />
+                            ) : (
+                                <p className="text-white font-medium">{formData.location || "Not provided"}</p>
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</label>
+                            <p className="text-white font-medium">Not provided</p>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        </div>
+    );
+}

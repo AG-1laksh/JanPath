@@ -1,0 +1,36 @@
+
+> web-admin@0.1.0 build
+> next build
+
+  Γû▓ Next.js 14.2.35
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./src/app/dashboard/admin/page.tsx
+Module not found: Can't resolve '@/components/dashboard/Sidebar'
+
+https://nextjs.org/docs/messages/module-not-found
+
+./src/app/dashboard/admin/page.tsx
+Module not found: Can't resolve '@/components/dashboard/Header'
+
+https://nextjs.org/docs/messages/module-not-found
+
+./src/app/dashboard/admin/page.tsx
+Module not found: Can't resolve '@/components/dashboard/StatCard'
+
+https://nextjs.org/docs/messages/module-not-found
+
+./src/app/dashboard/admin/page.tsx
+Module not found: Can't resolve '@/components/dashboard/RecentActivity'
+
+https://nextjs.org/docs/messages/module-not-found
+
+./src/app/dashboard/citizen/page.tsx
+Module not found: Can't resolve '@/components/dashboard/Sidebar'
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+> Build failed because of webpack errors
