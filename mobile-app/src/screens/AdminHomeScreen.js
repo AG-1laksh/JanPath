@@ -275,18 +275,27 @@ const AdminHomeScreen = ({ currentUser }) => {
           {registeredWorkers.length === 0 ? (
             <Text style={styles.emptyText}>No registered workers.</Text>
           ) : (
-            <FlatList
-              data={registeredWorkers}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.list}
-              renderItem={({ item }) => (
-                <View style={styles.card}>
-                  <Text style={styles.cardTitle}>{item.name}</Text>
-                  <Text style={styles.cardMeta}>Department: {item.department || 'N/A'}</Text>
-                  <Text style={styles.cardMeta}>Email: {item.email}</Text>
-                </View>
-              )}
-            />
+            Object.entries(
+              registeredWorkers.reduce((acc, worker) => {
+                const dept = worker.department || 'Unassigned';
+                if (!acc[dept]) acc[dept] = [];
+                acc[dept].push(worker);
+                return acc;
+              }, {})
+            ).map(([dept, workers]) => (
+              <View key={dept} style={styles.groupBlock}>
+                <Text style={styles.groupTitle}>
+                  {dept} ({workers.length})
+                </Text>
+                {workers.map((item) => (
+                  <View key={item.id} style={styles.card}>
+                    <Text style={styles.cardTitle}>{item.name}</Text>
+                    <Text style={styles.cardMeta}>Department: {item.department || 'N/A'}</Text>
+                    <Text style={styles.cardMeta}>Email: {item.email}</Text>
+                  </View>
+                ))}
+              </View>
+            ))
           )}
         </>
       )}
@@ -347,6 +356,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 8,
+  },
+  groupBlock: {
+    marginBottom: 8,
+  },
+  groupTitle: {
+    fontWeight: '700',
+    color: '#1f2a44',
+    marginBottom: 6,
   },
   input: {
     backgroundColor: '#fff',

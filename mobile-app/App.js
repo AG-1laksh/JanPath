@@ -23,6 +23,7 @@ import {
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
@@ -139,132 +140,134 @@ function AuthScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>User Login</Text>
-        <View style={styles.roleRow}>
-          {['USER', 'WORKER', 'ADMIN'].map((role) => (
-            <TouchableOpacity
-              key={role}
-              style={[styles.roleButton, selectedRole === role && styles.roleButtonActive]}
-              onPress={() => setSelectedRole(role)}
-            >
-              <Text
-                style={selectedRole === role ? styles.roleTextActive : styles.roleText}
+      <ScrollView contentContainerStyle={styles.authContainer} keyboardShouldPersistTaps="handled">
+        <View style={styles.card}>
+          <Text style={styles.title}>User Login</Text>
+          <View style={styles.roleRow}>
+            {['USER', 'WORKER', 'ADMIN'].map((role) => (
+              <TouchableOpacity
+                key={role}
+                style={[styles.roleButton, selectedRole === role && styles.roleButtonActive]}
+                onPress={() => setSelectedRole(role)}
               >
-                {role}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        {mode === 'signup' && (
+                <Text
+                  style={selectedRole === role ? styles.roleTextActive : styles.roleText}
+                >
+                  {role}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {mode === 'signup' && (
+            <TextInput
+              style={styles.input}
+              placeholder="Full name"
+              value={name}
+              onChangeText={setName}
+            />
+          )}
+          {mode === 'signup' && selectedRole === 'WORKER' && (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Date of birth (DD/MM/YYYY)"
+                value={dob}
+                onChangeText={setDob}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Phone"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Aadhar"
+                keyboardType="number-pad"
+                value={aadhar}
+                onChangeText={setAadhar}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="City"
+                value={city}
+                onChangeText={setCity}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Department"
+                value={department}
+                onChangeText={setDepartment}
+              />
+              <View style={styles.skillRow}>
+                {WORKER_SKILLS.map((skill) => {
+                  const active = skills.includes(skill);
+                  return (
+                    <TouchableOpacity
+                      key={skill}
+                      style={[styles.skillChip, active && styles.skillChipActive]}
+                      onPress={() =>
+                        setSkills((prev) =>
+                          prev.includes(skill)
+                            ? prev.filter((item) => item !== skill)
+                            : [...prev, skill]
+                        )
+                      }
+                    >
+                      <Text style={active ? styles.skillTextActive : styles.skillText}>
+                        {skill}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Experience years"
+                keyboardType="number-pad"
+                value={experienceYears}
+                onChangeText={setExperienceYears}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Experience months"
+                keyboardType="number-pad"
+                value={experienceMonths}
+                onChangeText={setExperienceMonths}
+              />
+            </>
+          )}
           <TextInput
             style={styles.input}
-            placeholder="Full name"
-            value={name}
-            onChangeText={setName}
+            placeholder="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
-        )}
-        {mode === 'signup' && selectedRole === 'WORKER' && (
-          <>
-            <TextInput
-              style={styles.input}
-              placeholder="Date of birth (DD/MM/YYYY)"
-              value={dob}
-              onChangeText={setDob}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Phone"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Aadhar"
-              keyboardType="number-pad"
-              value={aadhar}
-              onChangeText={setAadhar}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="City"
-              value={city}
-              onChangeText={setCity}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Department"
-              value={department}
-              onChangeText={setDepartment}
-            />
-            <View style={styles.skillRow}>
-              {WORKER_SKILLS.map((skill) => {
-                const active = skills.includes(skill);
-                return (
-                  <TouchableOpacity
-                    key={skill}
-                    style={[styles.skillChip, active && styles.skillChipActive]}
-                    onPress={() =>
-                      setSkills((prev) =>
-                        prev.includes(skill)
-                          ? prev.filter((item) => item !== skill)
-                          : [...prev, skill]
-                      )
-                    }
-                  >
-                    <Text style={active ? styles.skillTextActive : styles.skillText}>
-                      {skill}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Experience years"
-              keyboardType="number-pad"
-              value={experienceYears}
-              onChangeText={setExperienceYears}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Experience months"
-              keyboardType="number-pad"
-              value={experienceMonths}
-              onChangeText={setExperienceMonths}
-            />
-          </>
-        )}
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <Button
-          title={loading ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}
-          onPress={handleAuth}
-          disabled={loading}
-        />
-        <TouchableOpacity
-          style={styles.linkButton}
-          onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
-        >
-          <Text style={styles.linkText}>
-            {mode === 'signup' ? 'Already have an account? Sign in' : 'No account? Sign up'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+          <Button
+            title={loading ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}
+            onPress={handleAuth}
+            disabled={loading}
+          />
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
+          >
+            <Text style={styles.linkText}>
+              {mode === 'signup' ? 'Already have an account? Sign in' : 'No account? Sign up'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
       <StatusBar style="auto" />
     </SafeAreaView>
   );
@@ -285,6 +288,7 @@ export default function App() {
   const [grievances, setGrievances] = useState([]);
   const [selectedGrievance, setSelectedGrievance] = useState(null);
   const [timeline, setTimeline] = useState([]);
+  const [detailTab, setDetailTab] = useState('details');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -498,31 +502,64 @@ export default function App() {
               <Text style={styles.title}>Status Timeline</Text>
               <Button title="Back" onPress={() => setSelectedGrievance(null)} />
             </View>
-            <Text style={styles.subTitle}>{selectedGrievance.title}</Text>
-            <Text style={styles.metaText}>Status: {selectedGrievance.status}</Text>
-            <Text style={styles.metaText}>Created: {formatDate(selectedGrievance.createdAt)}</Text>
-            {selectedGrievance.imageBase64 ? (
-              <Image
-                source={{ uri: `data:image/jpeg;base64,${selectedGrievance.imageBase64}` }}
-                style={styles.preview}
-              />
-            ) : null}
+            <View style={styles.tabRow}>
+              <TouchableOpacity
+                style={[styles.tabButton, detailTab === 'details' && styles.tabButtonActive]}
+                onPress={() => setDetailTab('details')}
+              >
+                <Text style={detailTab === 'details' ? styles.tabTextActive : styles.tabText}>
+                  Details
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tabButton, detailTab === 'updates' && styles.tabButtonActive]}
+                onPress={() => setDetailTab('updates')}
+              >
+                <Text style={detailTab === 'updates' ? styles.tabTextActive : styles.tabText}>
+                  Updates
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {detailTab === 'details' ? (
+              <>
+                <Text style={styles.subTitle}>{selectedGrievance.title}</Text>
+                <Text style={styles.metaText}>Status: {selectedGrievance.status}</Text>
+                <Text style={styles.metaText}>Created: {formatDate(selectedGrievance.createdAt)}</Text>
+                {selectedGrievance.imageBase64 ? (
+                  <Image
+                    source={{ uri: `data:image/jpeg;base64,${selectedGrievance.imageBase64}` }}
+                    style={styles.preview}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <>
+                {timeline.length === 0 && <Text style={styles.emptyText}>No updates yet.</Text>}
 
-            {timeline.length === 0 && <Text style={styles.emptyText}>No updates yet.</Text>}
-
-            {timeline.map((log) => (
-              <View key={log.id} style={styles.timelineItem}>
-                <Text style={styles.timelineStatus}>{log.status}</Text>
-                <Text style={styles.metaText}>{log.remarks}</Text>
-                <Text style={styles.metaText}>{formatDate(log.timestamp)}</Text>
-              </View>
-            ))}
+                {timeline.map((log) => (
+                  <View key={log.id} style={styles.timelineItem}>
+                    <Text style={styles.timelineStatus}>{log.status}</Text>
+                    <Text style={styles.metaText}>{log.remarks}</Text>
+                    <Text style={styles.metaText}>{formatDate(log.timestamp)}</Text>
+                  </View>
+                ))}
+              </>
+            )}
           </ScrollView>
           <StatusBar style="auto" />
         </SafeAreaView>
       </SafeAreaProvider>
     );
   }
+
+  const deleteGrievance = async (grievanceId) => {
+    try {
+      await deleteDoc(doc(db, 'grievances', grievanceId));
+      Alert.alert('Deleted', 'Grievance deleted.');
+    } catch (error) {
+      Alert.alert('Delete failed', error?.message || 'Please try again.');
+    }
+  };
 
   return (
     <SafeAreaProvider>
@@ -588,15 +625,14 @@ export default function App() {
           {grievances.length === 0 && <Text style={styles.emptyText}>No grievances yet.</Text>}
 
           {grievances.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.listItem}
-              onPress={() => setSelectedGrievance(item)}
-            >
-              <Text style={styles.listTitleText}>{item.title}</Text>
-              <Text style={styles.metaText}>Status: {item.status}</Text>
-              <Text style={styles.metaText}>Created: {formatDate(item.createdAt)}</Text>
-            </TouchableOpacity>
+            <View key={item.id} style={styles.listItem}>
+              <TouchableOpacity onPress={() => setSelectedGrievance(item)}>
+                <Text style={styles.listTitleText}>{item.title}</Text>
+                <Text style={styles.metaText}>Status: {item.status}</Text>
+                <Text style={styles.metaText}>Created: {formatDate(item.createdAt)}</Text>
+              </TouchableOpacity>
+              <Button title="Delete" color="#d9534f" onPress={() => deleteGrievance(item.id)} />
+            </View>
           ))}
         </ScrollView>
         <StatusBar style="auto" />
@@ -664,6 +700,31 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: 12,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#c7d2f2',
+    alignItems: 'center',
+  },
+  tabButtonActive: {
+    backgroundColor: '#3b6ef5',
+    borderColor: '#3b6ef5',
+  },
+  tabText: {
+    color: '#3b6ef5',
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#fff',
+    fontWeight: '600',
   },
   pill: {
     paddingHorizontal: 12,
@@ -773,6 +834,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 12,
+  },
+  authContainer: {
+    padding: 16,
   },
   timelineItem: {
     backgroundColor: '#fff',

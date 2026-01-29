@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Button, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Button, Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -8,6 +8,7 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack, mode }) =
   const [status, setStatus] = useState(grievance?.status || '');
   const [loading, setLoading] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [progressText, setProgressText] = useState('');
   
   const updateStatus = async (nextStatus, remarks) => {
     if (!grievance?.id || !currentUser?.uid) return;
@@ -58,6 +59,33 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack, mode }) =
     }
   };
 
+  const addProgressUpdate = async () => {
+    if (!grievance?.id || !currentUser?.uid || !progressText.trim()) return;
+
+    try {
+      setLoading(true);
+      if (!status || status === 'Assigned') {
+        await updateDoc(doc(db, 'grievances', grievance.id), {
+          status: 'In Progress',
+        });
+        setStatus('In Progress');
+      }
+      await addDoc(collection(db, 'statusLogs'), {
+        grievanceId: grievance.id,
+        status: status && status !== 'Assigned' ? status : 'In Progress',
+        updatedBy: currentUser.uid,
+        remarks: progressText.trim(),
+        timestamp: serverTimestamp(),
+      });
+      setProgressText('');
+      Alert.alert('Update sent', 'Progress update added.');
+    } catch (error) {
+      Alert.alert('Update failed', error?.message || 'Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -94,6 +122,18 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack, mode }) =
             />
           ) : (
             <>
+              <Text style={styles.label}>Progress Update</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Write a short update"
+                value={progressText}
+                onChangeText={setProgressText}
+              />
+              <Button
+                title={loading ? 'Please wait...' : 'Add Update'}
+                onPress={addProgressUpdate}
+                disabled={loading || !progressText.trim()}
+              />
               <Button
                 title={loading ? 'Please wait...' : 'Start Work'}
                 onPress={() => updateStatus('In Progress', 'Work started')}
@@ -141,6 +181,15 @@ const styles = StyleSheet.create({
     color: '#1f2a44',
     fontSize: 14,
     marginTop: 4,
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#d8deeb',
+    marginTop: 8,
+    marginBottom: 8,
   },
   buttonGroup: {
     marginTop: 20,
