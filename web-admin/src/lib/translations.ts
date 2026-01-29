@@ -88,7 +88,20 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Grievance Page
     "Track and manage your submitted reports.": "Track and manage your submitted reports.",
-    "Search grievance ID or title...": "Search grievance ID or title..."
+    "Search grievance ID or title...": "Search grievance ID or title...",
+
+    // WhatsApp Support
+    "WhatsApp Support": "WhatsApp Support",
+    "Chat with Ultron for instant help.": "Chat with Ultron for instant help.",
+
+    // Chatbot
+    "Type a message...": "Type a message...",
+    "Hello! I am Ultron, your AI assistant. How can I help you today?": "Hello! I am Ultron, your AI assistant. How can I help you today?",
+    "You can file a new grievance from the 'Grievances' tab in the sidebar.": "You can file a new grievance from the 'Grievances' tab in the sidebar.",
+    "To check the status of your grievance, go to 'My Grievances'.": "To check the status of your grievance, go to 'My Grievances'.",
+    "You can contact our support team at support@janpath.gov.in": "You can contact our support team at support@janpath.gov.in",
+    "Hello! How can I assist you with your civic issues today?": "Hello! How can I assist you with your civic issues today?",
+    "I'm not sure how to help with that. Please try asking about grievances or status.": "I'm not sure how to help with that. Please try asking about grievances or status."
   },
   Hindi: {
     "Overview": "अवलोकन",
@@ -171,7 +184,20 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Grievance Page
     "Track and manage your submitted reports.": "अपनी सबमिट की गई रिपोर्ट ट्रैक और प्रबंधित करें।",
-    "Search grievance ID or title...": "शिकायत आईडी या शीर्षक खोजें..."
+    "Search grievance ID or title...": "शिकायत आईडी या शीर्षक खोजें...",
+    
+    // WhatsApp Support
+    "WhatsApp Support": "व्हाट्सएप सपोर्ट",
+    "Chat with Ultron for instant help.": "त्वरित सहायता के लिए अल्ट्रॉन से चैट करें।",
+
+    // Chatbot
+    "Type a message...": "कोई संदेश टाइप करें...",
+    "Hello! I am Ultron, your AI assistant. How can I help you today?": "नमस्ते! मैं अल्ट्रॉन हूँ, आपका एआई सहायक। आज मैं आपकी कैसे मदद कर सकता हूँ?",
+    "You can file a new grievance from the 'Grievances' tab in the sidebar.": "आप साइडबार में 'शिकायतें' टैब से नई शिकायत दर्ज कर सकते हैं।",
+    "To check the status of your grievance, go to 'My Grievances'.": "अपनी शिकायत की स्थिति जाँचने के लिए, 'मेरी शिकायतें' पर जाएँ।",
+    "You can contact our support team at support@janpath.gov.in": "आप हमारी सहायता टीम से support@janpath.gov.in पर संपर्क कर सकते हैं",
+    "Hello! How can I assist you with your civic issues today?": "नमस्ते! आज मैं आपके नागरिक मुद्दों में कैसे सहायता कर सकता हूँ?",
+    "I'm not sure how to help with that. Please try asking about grievances or status.": "मुझे यकीन नहीं है कि इसमें मदद कैसे की जाए। कृपया शिकायतों या स्थिति के बारे में पूछने का प्रयास करें।"
   },
   Tamil: {
     "Overview": "கண்ணோட்டம்",
@@ -244,7 +270,20 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Grievance Page
     "Track and manage your submitted reports.": "நீங்கள் சமர்ப்பித்த அறிக்கைகளைக் கண்காணித்து நிர்வகிக்கவும்.",
-    "Search grievance ID or title...": "குறை ஐடி அல்லது தலைப்பைத் தேடவும்..."
+    "Search grievance ID or title...": "குறை ஐடி அல்லது தலைப்பைத் தேடவும்...",
+
+    // WhatsApp Support
+    "WhatsApp Support": "வாட்ஸ்அப் ஆதரவு",
+    "Chat with Ultron for instant help.": "உடனடி உதவிக்கு அல்ட்ரானுடன் அரட்டையடிக்கவும்.",
+
+    // Chatbot
+    "Type a message...": "செய்தியைத் தட்டச்சு செய்க...",
+    "Hello! I am Ultron, your AI assistant. How can I help you today?": "வணக்கம்! நான் அல்ட்ரான், உங்கள் AI உதவியாளர். இன்று நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+    "You can file a new grievance from the 'Grievances' tab in the sidebar.": "பக்கப்பட்டியில் உள்ள 'குறைகள்' தாவலில் இருந்து புதிய குறையைத் தாக்கல் செய்யலாம்.",
+    "To check the status of your grievance, go to 'My Grievances'.": "உங்கள் குறையின் நிலையைக் காண, 'என் குறைகள்' பகுதிக்குச் செல்லவும்.",
+    "You can contact our support team at support@janpath.gov.in": "எங்கள் ஆதரவு குழுவை support@janpath.gov.in இல் தொடர்பு கொள்ளலாம்",
+    "Hello! How can I assist you with your civic issues today?": "வணக்கம்! இன்று உங்கள் குடிமைப் பிரச்சினைகளில் நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+    "I'm not sure how to help with that. Please try asking about grievances or status.": "எனக்கு அதில் எப்படி உதவுவது என்று தெரியவில்லை. தயவுசெய்து குறைகள் அல்லது நிலை பற்றி கேட்கவும்."
   },
   Telugu: {
     "Overview": "అవలోకనం",
@@ -317,7 +356,20 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Grievance Page
     "Track and manage your submitted reports.": "మీరు సమర్పించిన నివేదికలను ట్రాక్ చేయండి మరియు నిర్వహించండి.",
-    "Search grievance ID or title...": "ఫిర్యాదు ఐడి లేదా శీర్షికను శోధించండి..."
+    "Search grievance ID or title...": "ఫిర్యాదు ఐడి లేదా శీర్షికను శోధించండి...",
+
+    // WhatsApp Support
+    "WhatsApp Support": "వాట్సాప్ మద్దతు",
+    "Chat with Ultron for instant help.": "తక్షణ సహాయం కోసం ఆల్ట్రాన్‌తో చాట్ చేయండి.",
+
+    // Chatbot
+    "Type a message...": "సందేశాన్ని టైప్ చేయండి...",
+    "Hello! I am Ultron, your AI assistant. How can I help you today?": "హలో! నేను అల్ట్రాన్, మీ AI అసిస్టెంట్. ఈ రోజు నేను మీకు ఎలా సహాయపడగలను?",
+    "You can file a new grievance from the 'Grievances' tab in the sidebar.": "సైడ్‌బార్‌లోని 'ఫిర్యాదులు' ట్యాబ్ నుండి మీరు కొత్త ఫిర్యాదును దాఖలు చేయవచ్చు.",
+    "To check the status of your grievance, go to 'My Grievances'.": "మీ ఫిర్యాదు స్థితిని తనిఖీ చేయడానికి, 'నా ఫిర్యాదులు' కి వెళ్లండి.",
+    "You can contact our support team at support@janpath.gov.in": "మీరు మా మద్దతు బృందాన్ని support@janpath.gov.in వద్ద సంప్రదించవచ్చు",
+    "Hello! How can I assist you with your civic issues today?": "హలో! ఈ రోజు మీ పౌర సమస్యలతో నేను మీకు ఎలా సహాయపడగలను?",
+    "I'm not sure how to help with that. Please try asking about grievances or status.": "దానితో ఎలా సహాయం చేయాలో నాకు ఖచ్చితంగా తెలియదు. దయచేసి ఫిర్యాదులు లేదా స్థితి గురించి అడగడానికి ప్రయత్నించండి."
   },
   Bengali: {
     "Overview": "ওভারভিউ",
@@ -390,7 +442,20 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Grievance Page
     "Track and manage your submitted reports.": "আপনার জমা দেওয়া রিপোর্টগুলি ট্র্যাক এবং পরিচালনা করুন।",
-    "Search grievance ID or title...": "অভিযোগ আইডি বা শিরোনাম অনুসন্ধান করুন..."
+    "Search grievance ID or title...": "অভিযোগ আইডি বা শিরোনাম অনুসন্ধান করুন...",
+
+    // WhatsApp Support
+    "WhatsApp Support": "হোয়াটসঅ্যাপ সাপোর্ট",
+    "Chat with Ultron for instant help.": "তাৎক্ষণিক সহায়তার জন্য আলট্রনের সাথে চ্যাট করুন।",
+
+    // Chatbot
+    "Type a message...": "একটি বার্তা টাইপ করুন...",
+    "Hello! I am Ultron, your AI assistant. How can I help you today?": "হ্যালো! আমি আলট্রন, আপনার এআই সহকারী। আজ আমি আপনাকে কিভাবে সাহায্য করতে পারি?",
+    "You can file a new grievance from the 'Grievances' tab in the sidebar.": "আপনি সাইডবারের 'অভিযোগ' ট্যাব থেকে একটি নতুন অভিযোগ দায়ের করতে পারেন।",
+    "To check the status of your grievance, go to 'My Grievances'.": "আপনার অভিযোগের স্থিতি পরীক্ষা করতে, 'আমার অভিযোগ' এ যান।",
+    "You can contact our support team at support@janpath.gov.in": "আপনি আমাদের সহায়তা দলের সাথে support@janpath.gov.in এ যোগাযোগ করতে পারেন",
+    "Hello! How can I assist you with your civic issues today?": "হ্যালো! আজ আমি আপনার নাগরিক সমস্যাগুলিতে আপনাকে কীভাবে সহায়তা করতে পারি?",
+    "I'm not sure how to help with that. Please try asking about grievances or status.": "আমি নিশ্চিত নই কিভাবে এটিতে সাহায্য করব। অনুগ্রহ করে অভিযোগ বা স্থিতি সম্পর্কে জিজ্ঞাসা করার চেষ্টা করুন।"
   },
   Kannada: {
     "Overview": "ಅವಲೋಕನ",
@@ -463,6 +528,19 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Grievance Page
     "Track and manage your submitted reports.": "ನಿಮ್ಮ ಸಲ್ಲಿಸಿದ ವರದಿಗಳನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ ಮತ್ತು ನಿರ್ವಹಿಸಿ.",
-    "Search grievance ID or title...": "ದೂರು ಐಡಿ ಅಥವಾ ಶೀರ್ಷಿಕೆಯನ್ನು ಹುಡುಕಿ..."
+    "Search grievance ID or title...": "ದೂರು ಐಡಿ ಅಥವಾ ಶೀರ್ಷಿಕೆಯನ್ನು ಹುಡುಕಿ...",
+
+    // WhatsApp Support
+    "WhatsApp Support": "WhatsApp ಬೆಂಬಲ",
+    "Chat with Ultron for instant help.": "ತ್ವರಿತ ಸಹಾಯಕ್ಕಾಗಿ ಅಲ್ಟ್ರಾನ್‌ನೊಂದಿಗೆ ಚಾಟ್ ಮಾಡಿ.",
+
+    // Chatbot
+    "Type a message...": "ಸಂದೇಶವನ್ನು ಟೈಪ್ ಮಾಡಿ...",
+    "Hello! I am Ultron, your AI assistant. How can I help you today?": "ನಮಸ್ಕಾರ! ನಾನು ಅಲ್ಟ್ರಾನ್, ನಿಮ್ಮ AI ಸಹಾಯಕ. ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+    "You can file a new grievance from the 'Grievances' tab in the sidebar.": "ಸೈಡ್‌ಬಾರ್‌ನಲ್ಲಿರುವ 'ಕುಂದುಕೊರತೆಗಳು' ಟ್ಯಾಬ್‌ನಿಂದ ನೀವು ಹೊಸ ದೂರನ್ನು ಸಲ್ಲಿಸಬಹುದು.",
+    "To check the status of your grievance, go to 'My Grievances'.": "ನಿಮ್ಮ ದೂರಿನ ಸ್ಥಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಲು, 'ನನ್ನ ದೂರುಗಳು' ಗೆ ಹೋಗಿ.",
+    "You can contact our support team at support@janpath.gov.in": "ನಮ್ಮ ಬೆಂಬಲ ತಂಡವನ್ನು support@janpath.gov.in ನಲ್ಲಿ ಸಂಪರ್ಕಿಸಬಹುದು",
+    "Hello! How can I assist you with your civic issues today?": "ನಮಸ್ಕಾರ! ಇಂದು ನಿಮ್ಮ ನಾಗರಿಕ ಸಮಸ್ಯೆಗಳೊಂದಿಗೆ ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+    "I'm not sure how to help with that. Please try asking about grievances or status.": "ಅದಕ್ಕೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬೇಕೆಂದು ನನಗೆ ಖಚಿತವಿಲ್ಲ. ದಯವಿಟ್ಟು ಕುಂದುಕೊರತೆಗಳು ಅಥವಾ ಸ್ಥಿತಿಯ ಬಗ್ಗೆ ಕೇಳಲು ಪ್ರಯತ್ನಿಸಿ."
   }
 };

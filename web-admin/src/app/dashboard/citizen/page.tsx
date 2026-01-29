@@ -18,6 +18,7 @@ import {
     Activity
 } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+import { Chatbot } from "@/components/Chatbot";
 
 // Updated Sidebar items based on the provided image
 const CITIZEN_SIDEBAR_ITEMS = [
@@ -101,23 +102,11 @@ export default function CitizenDashboard() {
                             </div>
                         </div>
 
-                        {/* Whatsapp/Support Floating Style Widget */}
-                        <div className="p-4 rounded-2xl bg-[#111b21] border border-white/5 text-white shadow-lg relative overflow-hidden group cursor-pointer hover:bg-[#202c33] transition-colors">
-                            <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
-                                    <MessageSquare size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-semibold text-emerald-100 mb-0.5">WhatsApp Support</div>
-                                    <div className="text-xs text-emerald-100/60 leading-relaxed">
-                                        Chat with Ultron for instant help.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {/* Whatsapp/Support Floating Style Widget Removed */}
                     </div>
                 </div>
             </main>
+            <Chatbot />
         </div>
     );
 }
