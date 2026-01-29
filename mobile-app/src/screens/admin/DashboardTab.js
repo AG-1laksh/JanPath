@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase';
 
-const DashboardTab = ({ navigation, currentUser }) => {
+const DashboardTab = ({ currentUser, onNavigate }) => {
   const [stats, setStats] = useState({
     pendingRequests: 0,
     pendingSignups: 0,
@@ -75,6 +75,7 @@ const DashboardTab = ({ navigation, currentUser }) => {
       icon: 'git-pull-request',
       color: '#f59e0b',
       bgColor: '#fef3c7',
+      tab: 'Requests',
     },
     {
       title: 'Pending Signups',
@@ -82,6 +83,7 @@ const DashboardTab = ({ navigation, currentUser }) => {
       icon: 'person-add',
       color: '#8b5cf6',
       bgColor: '#ede9fe',
+      tab: 'Signups',
     },
     {
       title: 'Unassigned',
@@ -89,6 +91,7 @@ const DashboardTab = ({ navigation, currentUser }) => {
       icon: 'clipboard',
       color: '#ef4444',
       bgColor: '#fef2f2',
+      tab: 'Assign',
     },
     {
       title: 'Total Workers',
@@ -96,6 +99,7 @@ const DashboardTab = ({ navigation, currentUser }) => {
       icon: 'people',
       color: '#3b82f6',
       bgColor: '#eff6ff',
+      tab: 'Workers',
     },
   ];
 
@@ -124,13 +128,17 @@ const DashboardTab = ({ navigation, currentUser }) => {
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         {statCards.map((card, index) => (
-          <View key={index} style={styles.statCard}>
+          <TouchableOpacity 
+            key={index} 
+            style={styles.statCard}
+            onPress={() => onNavigate?.(card.tab)}
+          >
             <View style={[styles.statIcon, { backgroundColor: card.bgColor }]}>
               <Ionicons name={card.icon} size={22} color={card.color} />
             </View>
             <Text style={styles.statValue}>{card.value}</Text>
             <Text style={styles.statTitle}>{card.title}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
 
@@ -138,23 +146,23 @@ const DashboardTab = ({ navigation, currentUser }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionCard}>
+          <TouchableOpacity style={styles.actionCard} onPress={() => onNavigate?.('Assign')}>
             <View style={[styles.actionIcon, { backgroundColor: '#eff6ff' }]}>
               <Ionicons name="add-circle" size={24} color="#3b82f6" />
             </View>
             <Text style={styles.actionText}>Assign Task</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionCard}>
+          <TouchableOpacity style={styles.actionCard} onPress={() => onNavigate?.('Signups')}>
             <View style={[styles.actionIcon, { backgroundColor: '#f0fdf4' }]}>
               <Ionicons name="person-add" size={24} color="#22c55e" />
             </View>
             <Text style={styles.actionText}>Review Signups</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionCard}>
+          <TouchableOpacity style={styles.actionCard} onPress={() => onNavigate?.('Workers')}>
             <View style={[styles.actionIcon, { backgroundColor: '#fef3c7' }]}>
               <Ionicons name="analytics" size={24} color="#f59e0b" />
             </View>
-            <Text style={styles.actionText}>View Reports</Text>
+            <Text style={styles.actionText}>View Workers</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -190,7 +198,7 @@ const DashboardTab = ({ navigation, currentUser }) => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Grievances</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => onNavigate?.('Assign')}>
             <Text style={styles.viewAllText}>View All</Text>
           </TouchableOpacity>
         </View>
