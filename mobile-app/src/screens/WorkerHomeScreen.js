@@ -7,30 +7,50 @@ import { auth, db } from '../firebase';
 import WorkerGrievanceDetailScreen from './WorkerGrievanceDetailScreen';
 
 const WorkerHomeScreen = ({ currentUser }) => {
-  const [grievances, setGrievances] = useState([]);
+  const [assignedGrievances, setAssignedGrievances] = useState([]);
+  const [availableGrievances, setAvailableGrievances] = useState([]);
   const [selectedGrievance, setSelectedGrievance] = useState(null);
+  const [selectedTab, setSelectedTab] = useState('assigned');
 
   useEffect(() => {
     if (!currentUser?.uid) {
-      setGrievances([]);
+      setAssignedGrievances([]);
+      setAvailableGrievances([]);
       return undefined;
     }
 
-    const grievancesQuery = query(
+    const assignedQuery = query(
       collection(db, 'grievances'),
       where('assignedWorkerId', '==', currentUser.uid),
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(grievancesQuery, (snapshot) => {
+    const availableQuery = query(
+      collection(db, 'grievances'),
+      where('assignedWorkerId', '==', null),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribeAssigned = onSnapshot(assignedQuery, (snapshot) => {
       const items = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data(),
       }));
-      setGrievances(items);
+      setAssignedGrievances(items);
     });
 
-    return unsubscribe;
+    const unsubscribeAvailable = onSnapshot(availableQuery, (snapshot) => {
+      const items = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+      setAvailableGrievances(items);
+    });
+
+    return () => {
+      unsubscribeAssigned();
+      unsubscribeAvailable();
+    };
   }, [currentUser]);
 
   if (selectedGrievance) {
@@ -38,6 +58,7 @@ const WorkerHomeScreen = ({ currentUser }) => {
       <WorkerGrievanceDetailScreen
         grievance={selectedGrievance}
         currentUser={currentUser}
+        mode={selectedTab === 'available' ? 'available' : 'assigned'}
         onBack={() => setSelectedGrievance(null)}
       />
     );
@@ -46,14 +67,50 @@ const WorkerHomeScreen = ({ currentUser }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Assigned Grievances</Text>
+        <Text style={styles.title}>Worker</Text>
         <Button title="Sign out" onPress={() => signOut(auth)} />
       </View>
-      {grievances.length === 0 ? (
-        <Text style={styles.emptyText}>No assigned grievances.</Text>
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[styles.tabButton, selectedTab === 'assigned' && styles.tabButtonActive]}
+          onPress={() => setSelectedTab('assigned')}
+        >
+          <Text style={selectedTab === 'assigned' ? styles.tabTextActive : styles.tabText}>
+            Assigned
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, selectedTab === 'available' && styles.tabButtonActive]}
+          onPress={() => setSelectedTab('available')}
+        >
+          <Text style={selectedTab === 'available' ? styles.tabTextActive : styles.tabText}>
+            Available
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {selectedTab === 'assigned' ? (
+        assignedGrievances.length === 0 ? (
+          <Text style={styles.emptyText}>No assigned grievances.</Text>
+        ) : (
+          <FlatList
+            data={assignedGrievances}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.card} onPress={() => setSelectedGrievance(item)}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardMeta}>Category: {item.category}</Text>
+                <Text style={styles.cardMeta}>Status: {item.status}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        )
+      ) : availableGrievances.length === 0 ? (
+        <Text style={styles.emptyText}>No available grievances.</Text>
       ) : (
         <FlatList
-          data={grievances}
+          data={availableGrievances}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
@@ -87,6 +144,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#c7d2f2',
+    alignItems: 'center',
+  },
+  tabButtonActive: {
+    backgroundColor: '#3b6ef5',
+    borderColor: '#3b6ef5',
+  },
+  tabText: {
+    color: '#3b6ef5',
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#fff',
+    fontWeight: '600',
   },
   list: {
     paddingBottom: 24,

@@ -21,6 +21,7 @@ import {
   signOut,
 } from 'firebase/auth';
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
@@ -34,14 +35,38 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from './src/firebase';
 import WorkerHomeScreen from './src/screens/WorkerHomeScreen';
+import AdminHomeScreen from './src/screens/AdminHomeScreen';
 
 const PRIORITIES = ['Low', 'Medium', 'High'];
+const WORKER_SKILLS = [
+  'Road Repair',
+  'Plumbing',
+  'Electrical Work',
+  'Construction',
+  'Drainage Systems',
+  'Water Treatment',
+  'Sewage Management',
+  'Equipment Maintenance',
+  'Emergency Response',
+  'Safety Protocols',
+  'Quality Control',
+  'Project Management',
+];
 
 function AuthScreen() {
   const [mode, setMode] = useState('signin');
+  const [selectedRole, setSelectedRole] = useState('USER');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [dob, setDob] = useState('');
+  const [phone, setPhone] = useState('');
+  const [aadhar, setAadhar] = useState('');
+  const [city, setCity] = useState('');
+  const [department, setDepartment] = useState('');
+  const [experienceYears, setExperienceYears] = useState('');
+  const [experienceMonths, setExperienceMonths] = useState('');
+  const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleAuth = async () => {
@@ -55,19 +80,55 @@ function AuthScreen() {
       return;
     }
 
+    if (mode === 'signup' && selectedRole === 'WORKER') {
+      if (!dob || !phone || !aadhar || !city || !department || skills.length === 0) {
+        Alert.alert('Missing fields', 'Please fill all worker details.');
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       if (mode === 'signup') {
         const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        const roleToSave = selectedRole === 'WORKER' ? 'WORKER_PENDING' : selectedRole;
         await setDoc(doc(db, 'users', userCred.user.uid), {
           name,
           email,
-          role: 'USER',
-          department: null,
+          role: roleToSave,
+          department: selectedRole === 'WORKER' ? department : null,
           createdAt: serverTimestamp(),
         });
+
+        if (selectedRole === 'WORKER') {
+          await addDoc(collection(db, 'workerSignupRequests'), {
+            workerId: userCred.user.uid,
+            name,
+            email,
+            dob,
+            phone,
+            aadhar,
+            city,
+            department,
+            skills,
+            experienceYears,
+            experienceMonths,
+            status: 'Pending',
+            requestedAt: serverTimestamp(),
+          });
+          Alert.alert('Request sent', 'Admin approval is required before login.');
+        }
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCred = await signInWithEmailAndPassword(auth, email, password);
+        const roleSnap = await getDoc(doc(db, 'users', userCred.user.uid));
+        const actualRole = roleSnap.data()?.role || 'USER';
+        if (actualRole === 'WORKER_PENDING') {
+          await signOut(auth);
+          Alert.alert('Pending approval', 'Admin approval is required for worker access.');
+        } else if (actualRole !== selectedRole) {
+          await signOut(auth);
+          Alert.alert('Role mismatch', `Please sign in as ${actualRole}.`);
+        }
       }
     } catch (error) {
       Alert.alert('Auth failed', error.message || 'Please try again.');
@@ -80,6 +141,21 @@ function AuthScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>User Login</Text>
+        <View style={styles.roleRow}>
+          {['USER', 'WORKER', 'ADMIN'].map((role) => (
+            <TouchableOpacity
+              key={role}
+              style={[styles.roleButton, selectedRole === role && styles.roleButtonActive]}
+              onPress={() => setSelectedRole(role)}
+            >
+              <Text
+                style={selectedRole === role ? styles.roleTextActive : styles.roleText}
+              >
+                {role}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         {mode === 'signup' && (
           <TextInput
             style={styles.input}
@@ -87,6 +163,78 @@ function AuthScreen() {
             value={name}
             onChangeText={setName}
           />
+        )}
+        {mode === 'signup' && selectedRole === 'WORKER' && (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Date of birth (DD/MM/YYYY)"
+              value={dob}
+              onChangeText={setDob}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone"
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Aadhar"
+              keyboardType="number-pad"
+              value={aadhar}
+              onChangeText={setAadhar}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="City"
+              value={city}
+              onChangeText={setCity}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Department"
+              value={department}
+              onChangeText={setDepartment}
+            />
+            <View style={styles.skillRow}>
+              {WORKER_SKILLS.map((skill) => {
+                const active = skills.includes(skill);
+                return (
+                  <TouchableOpacity
+                    key={skill}
+                    style={[styles.skillChip, active && styles.skillChipActive]}
+                    onPress={() =>
+                      setSkills((prev) =>
+                        prev.includes(skill)
+                          ? prev.filter((item) => item !== skill)
+                          : [...prev, skill]
+                      )
+                    }
+                  >
+                    <Text style={active ? styles.skillTextActive : styles.skillText}>
+                      {skill}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Experience years"
+              keyboardType="number-pad"
+              value={experienceYears}
+              onChangeText={setExperienceYears}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Experience months"
+              keyboardType="number-pad"
+              value={experienceMonths}
+              onChangeText={setExperienceMonths}
+            />
+          </>
         )}
         <TextInput
           style={styles.input}
@@ -333,6 +481,14 @@ export default function App() {
     );
   }
 
+  if (userRole === 'ADMIN') {
+    return (
+      <SafeAreaProvider>
+        <AdminHomeScreen currentUser={user} />
+      </SafeAreaProvider>
+    );
+  }
+
   if (selectedGrievance) {
     return (
       <SafeAreaProvider>
@@ -565,6 +721,58 @@ const styles = StyleSheet.create({
     color: '#3b6ef5',
     fontWeight: '600',
     textAlign: 'center',
+  },
+  roleRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  roleButton: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#c7d2f2',
+    alignItems: 'center',
+  },
+  roleButtonActive: {
+    backgroundColor: '#3b6ef5',
+    borderColor: '#3b6ef5',
+  },
+  roleText: {
+    color: '#3b6ef5',
+    fontWeight: '600',
+  },
+  roleTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  skillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  skillChip: {
+    borderWidth: 1,
+    borderColor: '#c7d2f2',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  skillChipActive: {
+    backgroundColor: '#3b6ef5',
+    borderColor: '#3b6ef5',
+  },
+  skillText: {
+    color: '#3b6ef5',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  skillTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 12,
   },
   timelineItem: {
     backgroundColor: '#fff',

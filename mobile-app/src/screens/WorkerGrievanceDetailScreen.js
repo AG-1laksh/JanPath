@@ -4,9 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack }) => {
+const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack, mode }) => {
   const [status, setStatus] = useState(grievance?.status || '');
   const [loading, setLoading] = useState(false);
+  const [requesting, setRequesting] = useState(false);
   
   const updateStatus = async (nextStatus, remarks) => {
     if (!grievance?.id || !currentUser?.uid) return;
@@ -34,9 +35,28 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack }) => {
     }
   };
 
-  const canAccept = status === 'Assigned';
-  const canStart = status === 'Accepted';
+  const canStart = status === 'Assigned' || status === 'Accepted';
   const canComplete = status === 'In Progress';
+  const canRequest = mode === 'available' && !grievance?.assignedWorkerId;
+
+  const requestAccess = async () => {
+    if (!grievance?.id || !currentUser?.uid) return;
+
+    try {
+      setRequesting(true);
+      await addDoc(collection(db, 'workerRequests'), {
+        grievanceId: grievance.id,
+        workerId: currentUser.uid,
+        status: 'Pending',
+        requestedAt: serverTimestamp(),
+      });
+      Alert.alert('Requested', 'Access request sent to admin.');
+    } catch (error) {
+      Alert.alert('Request failed', error?.message || 'Please try again.');
+    } finally {
+      setRequesting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,21 +86,26 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack }) => {
         <Text style={styles.value}>{status}</Text>
 
         <View style={styles.buttonGroup}>
-          <Button
-            title={loading ? 'Please wait...' : 'Accept Work'}
-            onPress={() => updateStatus('Accepted', 'Work accepted')}
-            disabled={loading || !canAccept}
-          />
-          <Button
-            title={loading ? 'Please wait...' : 'Start Work'}
-            onPress={() => updateStatus('In Progress', 'Work started')}
-            disabled={loading || !canStart}
-          />
-          <Button
-            title={loading ? 'Please wait...' : 'Mark Completed'}
-            onPress={() => updateStatus('Completed', 'Work completed')}
-            disabled={loading || !canComplete}
-          />
+          {mode === 'available' ? (
+            <Button
+              title={requesting ? 'Please wait...' : 'Request Access'}
+              onPress={requestAccess}
+              disabled={requesting || !canRequest}
+            />
+          ) : (
+            <>
+              <Button
+                title={loading ? 'Please wait...' : 'Start Work'}
+                onPress={() => updateStatus('In Progress', 'Work started')}
+                disabled={loading || !canStart}
+              />
+              <Button
+                title={loading ? 'Please wait...' : 'Mark Completed'}
+                onPress={() => updateStatus('Completed', 'Work completed')}
+                disabled={loading || !canComplete}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
