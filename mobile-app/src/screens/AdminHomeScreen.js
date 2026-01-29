@@ -21,6 +21,7 @@ const AdminHomeScreen = ({ currentUser }) => {
   const [pendingWorkerSignups, setPendingWorkerSignups] = useState([]);
   const [registeredWorkers, setRegisteredWorkers] = useState([]);
   const [unassignedGrievances, setUnassignedGrievances] = useState([]);
+  const [assignedGrievances, setAssignedGrievances] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedSignup, setSelectedSignup] = useState(null);
   const [selectedGrievance, setSelectedGrievance] = useState(null);
@@ -29,6 +30,7 @@ const AdminHomeScreen = ({ currentUser }) => {
   const [assignWorkerId, setAssignWorkerId] = useState('');
   const [assigning, setAssigning] = useState(false);
   const [activeTab, setActiveTab] = useState('requests');
+  const [workerFilter, setWorkerFilter] = useState('department'); // 'department', 'available', 'working'
 
   useEffect(() => {
     const requestsQuery = query(
@@ -52,6 +54,12 @@ const AdminHomeScreen = ({ currentUser }) => {
       collection(db, 'grievances'),
       where('assignedWorkerId', '==', null),
       orderBy('createdAt', 'desc')
+    );
+
+    const assignedGrievancesQuery = query(
+      collection(db, 'grievances'),
+      where('assignedWorkerId', '!=', null),
+      orderBy('assignedWorkerId')
     );
 
     const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
@@ -86,11 +94,20 @@ const AdminHomeScreen = ({ currentUser }) => {
       setUnassignedGrievances(items);
     });
 
+    const unsubscribeAssignedGrievances = onSnapshot(assignedGrievancesQuery, (snapshot) => {
+      const items = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+      setAssignedGrievances(items);
+    });
+
     return () => {
       unsubscribeRequests();
       unsubscribeWorkerSignups();
       unsubscribeWorkers();
       unsubscribeGrievances();
+      unsubscribeAssignedGrievances();
     };
   }, []);
 
@@ -190,6 +207,37 @@ const AdminHomeScreen = ({ currentUser }) => {
     await assignGrievance(assignGrievanceId.trim(), assignWorkerId.trim(), 'Assigned by admin');
     setAssignGrievanceId('');
     setAssignWorkerId('');
+  };
+
+  const getWorkerGrievances = (workerId) => {
+    return assignedGrievances.filter((g) => g.assignedWorkerId === workerId);
+  };
+
+  const renderWorkerCard = (item) => {
+    const workerGrievances = getWorkerGrievances(item.id);
+    const activeGrievances = workerGrievances.filter((g) => g.status !== 'Resolved' && g.status !== 'Closed');
+    return (
+      <View key={item.id} style={styles.card}>
+        <Text style={styles.cardTitle}>{item.name}</Text>
+        <Text style={styles.cardMeta}>Department: {item.department || 'N/A'}</Text>
+        <Text style={styles.cardMeta}>Email: {item.email}</Text>
+        <Text style={[styles.cardMeta, { color: item.isWorking ? '#e67e22' : '#27ae60' }]}>
+          Status: {item.isWorking ? 'Working' : 'Available'}
+        </Text>
+        <Text style={styles.cardMeta}>Assigned Works: {activeGrievances.length}</Text>
+        {activeGrievances.length > 0 && (
+          <View style={styles.worksContainer}>
+            <Text style={styles.worksTitle}>Current Tasks:</Text>
+            {activeGrievances.map((g) => (
+              <View key={g.id} style={styles.workItem}>
+                <Text style={styles.workItemTitle}>{g.title}</Text>
+                <Text style={styles.workItemMeta}>{g.category} • {g.status}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
   };
 
   return (
@@ -402,9 +450,29 @@ const AdminHomeScreen = ({ currentUser }) => {
       {!selectedSignup && !selectedRequest && !selectedGrievance && activeTab === 'workers' && (
         <>
           <Text style={styles.sectionTitle}>Registered Workers</Text>
+          <View style={styles.filterRow}>
+            <TouchableOpacity
+              style={[styles.filterButton, workerFilter === 'department' && styles.filterButtonActive]}
+              onPress={() => setWorkerFilter('department')}
+            >
+              <Text style={[styles.filterText, workerFilter === 'department' && styles.filterTextActive]}>By Dept</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterButton, workerFilter === 'available' && styles.filterButtonActive]}
+              onPress={() => setWorkerFilter('available')}
+            >
+              <Text style={[styles.filterText, workerFilter === 'available' && styles.filterTextActive]}>Available</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterButton, workerFilter === 'working' && styles.filterButtonActive]}
+              onPress={() => setWorkerFilter('working')}
+            >
+              <Text style={[styles.filterText, workerFilter === 'working' && styles.filterTextActive]}>Working</Text>
+            </TouchableOpacity>
+          </View>
           {registeredWorkers.length === 0 ? (
             <Text style={styles.emptyText}>No registered workers.</Text>
-          ) : (
+          ) : workerFilter === 'department' ? (
             Object.entries(
               registeredWorkers.reduce((acc, worker) => {
                 const dept = worker.department || 'Unassigned';
@@ -417,15 +485,25 @@ const AdminHomeScreen = ({ currentUser }) => {
                 <Text style={styles.groupTitle}>
                   {dept} ({workers.length})
                 </Text>
-                {workers.map((item) => (
-                  <View key={item.id} style={styles.card}>
-                    <Text style={styles.cardTitle}>{item.name}</Text>
-                    <Text style={styles.cardMeta}>Department: {item.department || 'N/A'}</Text>
-                    <Text style={styles.cardMeta}>Email: {item.email}</Text>
-                  </View>
-                ))}
+                {workers.map((item) => renderWorkerCard(item))}
               </View>
             ))
+          ) : workerFilter === 'available' ? (
+            <FlatList
+              data={registeredWorkers.filter((w) => !w.isWorking)}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.list}
+              ListEmptyComponent={<Text style={styles.emptyText}>No available workers.</Text>}
+              renderItem={({ item }) => renderWorkerCard(item)}
+            />
+          ) : (
+            <FlatList
+              data={registeredWorkers.filter((w) => w.isWorking)}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.list}
+              ListEmptyComponent={<Text style={styles.emptyText}>No workers currently working.</Text>}
+              renderItem={({ item }) => renderWorkerCard(item)}
+            />
           )}
         </>
       )}
@@ -525,6 +603,55 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: '#7b879f',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#e1e6f2',
+  },
+  filterButtonActive: {
+    backgroundColor: '#3b82f6',
+  },
+  filterText: {
+    color: '#5c6b8a',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  filterTextActive: {
+    color: '#fff',
+  },
+  worksContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e1e6f2',
+  },
+  worksTitle: {
+    fontWeight: '600',
+    color: '#1f2a44',
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  workItem: {
+    backgroundColor: '#f0f4ff',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  workItemTitle: {
+    fontWeight: '600',
+    color: '#3b82f6',
+    fontSize: 12,
+  },
+  workItemMeta: {
+    color: '#5c6b8a',
+    fontSize: 11,
   },
 });
 
