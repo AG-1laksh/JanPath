@@ -1,10 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Button,
-  Image,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,8 +11,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -24,22 +20,16 @@ import {
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
-  onSnapshot,
-  orderBy,
-  query,
   serverTimestamp,
   setDoc,
-  where,
-  writeBatch,
 } from 'firebase/firestore';
 import { auth, db } from './src/firebase';
-import WorkerHomeScreen from './src/screens/WorkerHomeScreen';
+import WorkerNavigation from './src/screens/WorkerNavigation';
 import AdminNavigation from './src/screens/AdminNavigation';
+import UserNavigation from './src/screens/UserNavigation';
 
-const PRIORITIES = ['Low', 'Medium', 'High'];
 const WORKER_SKILLS = [
   'Road Repair',
   'Plumbing',
@@ -278,19 +268,6 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [initializing, setInitializing] = useState(true);
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    category: '',
-    priority: 'Medium',
-  });
-  const [imageBase64, setImageBase64] = useState('');
-  const [location, setLocation] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [grievances, setGrievances] = useState([]);
-  const [selectedGrievance, setSelectedGrievance] = useState(null);
-  const [timeline, setTimeline] = useState([]);
-  const [detailTab, setDetailTab] = useState('details');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -323,146 +300,6 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  useEffect(() => {
-    if (!user) {
-      setGrievances([]);
-      return undefined;
-    }
-
-    const grievancesQuery = query(
-      collection(db, 'grievances'),
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(grievancesQuery, (snapshot) => {
-      const items = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      }));
-      setGrievances(items);
-    });
-
-    return unsubscribe;
-  }, [user]);
-
-  useEffect(() => {
-    if (!selectedGrievance) {
-      setTimeline([]);
-      return undefined;
-    }
-
-    const timelineQuery = query(
-      collection(db, 'statusLogs'),
-      where('grievanceId', '==', selectedGrievance.id),
-      orderBy('timestamp', 'asc')
-    );
-
-    const unsubscribe = onSnapshot(timelineQuery, (snapshot) => {
-      const items = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      }));
-      setTimeline(items);
-    });
-
-    return unsubscribe;
-  }, [selectedGrievance]);
-
-  const canSubmit = useMemo(() => {
-    return form.title && form.description && form.category && form.priority;
-  }, [form]);
-
-  const pickImage = async () => {
-    try {
-      const existing = await ImagePicker.getMediaLibraryPermissionsAsync();
-      let permission = existing;
-      if (!permission.granted) {
-        permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      }
-
-      if (!permission.granted) {
-        Alert.alert('Permission needed', 'Please allow access to photos to attach an image.', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ]);
-        return;
-      }
-
-      const mediaTypes = ImagePicker.MediaType?.Images
-        ? [ImagePicker.MediaType.Images]
-        : undefined;
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        ...(mediaTypes ? { mediaTypes } : {}),
-        base64: true,
-        quality: 0.6,
-      });
-
-      if (!result.canceled && result.assets?.length) {
-        setImageBase64(result.assets[0].base64 || '');
-      }
-    } catch (error) {
-      Alert.alert('Image picker failed', error?.message || 'Please try again.');
-    }
-  };
-
-  const submitGrievance = async () => {
-    if (!user) return;
-    if (!canSubmit) {
-      Alert.alert('Missing fields', 'Please fill in all required fields.');
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      const grievanceRef = doc(collection(db, 'grievances'));
-      const statusRef = doc(collection(db, 'statusLogs'));
-      const batch = writeBatch(db);
-
-      batch.set(grievanceRef, {
-        title: form.title,
-        description: form.description,
-        category: form.category,
-        priority: form.priority,
-        status: 'Submitted',
-        imageBase64: imageBase64 || '',
-        location: location || null,
-        userId: user.uid,
-        assignedWorkerId: null,
-        createdAt: serverTimestamp(),
-      });
-
-      batch.set(statusRef, {
-        grievanceId: grievanceRef.id,
-        status: 'Submitted',
-        updatedBy: user.uid,
-        remarks: 'Complaint registered',
-        timestamp: serverTimestamp(),
-      });
-
-      await batch.commit();
-
-      setForm({ title: '', description: '', category: '', priority: 'Medium' });
-      setImageBase64('');
-      setLocation(null);
-      Alert.alert('Submitted', 'Your grievance has been submitted.');
-    } catch (error) {
-      Alert.alert('Submit failed', error.message || 'Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const signOutUser = async () => {
-    await signOut(auth);
-  };
-
-  const formatDate = (timestamp) => {
-    if (!timestamp?.toDate) return '';
-    return timestamp.toDate().toLocaleString();
-  };
-
   if (initializing) {
     return (
       <SafeAreaProvider>
@@ -484,7 +321,7 @@ export default function App() {
   if (userRole === 'WORKER') {
     return (
       <SafeAreaProvider>
-        <WorkerHomeScreen currentUser={user} />
+        <WorkerNavigation currentUser={user} />
       </SafeAreaProvider>
     );
   }
@@ -497,187 +334,10 @@ export default function App() {
     );
   }
 
-  if (selectedGrievance) {
-    return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.container}>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.title}>Status Timeline</Text>
-              <Button title="Back" onPress={() => setSelectedGrievance(null)} />
-            </View>
-            <View style={styles.tabRow}>
-              <TouchableOpacity
-                style={[styles.tabButton, detailTab === 'details' && styles.tabButtonActive]}
-                onPress={() => setDetailTab('details')}
-              >
-                <Text style={detailTab === 'details' ? styles.tabTextActive : styles.tabText}>
-                  Details
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tabButton, detailTab === 'updates' && styles.tabButtonActive]}
-                onPress={() => setDetailTab('updates')}
-              >
-                <Text style={detailTab === 'updates' ? styles.tabTextActive : styles.tabText}>
-                  Updates
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {detailTab === 'details' ? (
-              <>
-                <Text style={styles.subTitle}>{selectedGrievance.title}</Text>
-                <Text style={styles.metaText}>Status: {selectedGrievance.status}</Text>
-                <Text style={styles.metaText}>Created: {formatDate(selectedGrievance.createdAt)}</Text>
-                {selectedGrievance.location ? (
-                  <Text style={styles.metaText}>
-                    Location: {selectedGrievance.location.address || ''} ({selectedGrievance.location.latitude?.toFixed(5)}, {selectedGrievance.location.longitude?.toFixed(5)})
-                  </Text>
-                ) : null}
-                {selectedGrievance.imageBase64 ? (
-                  <Image
-                    source={{ uri: `data:image/jpeg;base64,${selectedGrievance.imageBase64}` }}
-                    style={styles.preview}
-                  />
-                ) : null}
-              </>
-            ) : (
-              <>
-                {timeline.length === 0 && <Text style={styles.emptyText}>No updates yet.</Text>}
-
-                {timeline.map((log) => (
-                  <View key={log.id} style={styles.timelineItem}>
-                    <Text style={styles.timelineStatus}>{log.status}</Text>
-                    <Text style={styles.metaText}>{log.remarks}</Text>
-                    <Text style={styles.metaText}>{formatDate(log.timestamp)}</Text>
-                  </View>
-                ))}
-              </>
-            )}
-          </ScrollView>
-          <StatusBar style="auto" />
-        </SafeAreaView>
-      </SafeAreaProvider>
-    );
-  }
-
-  const deleteGrievance = async (grievanceId) => {
-    try {
-      await deleteDoc(doc(db, 'grievances', grievanceId));
-      Alert.alert('Deleted', 'Grievance deleted.');
-    } catch (error) {
-      Alert.alert('Delete failed', error?.message || 'Please try again.');
-    }
-  };
-
+  // Regular USER role - use the new UserNavigation
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.title}>Create Grievance</Text>
-            <Button title="Sign out" onPress={signOutUser} />
-          </View>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Title"
-            value={form.title}
-            onChangeText={(value) => setForm((prev) => ({ ...prev, title: value }))}
-          />
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Description"
-            multiline
-            value={form.description}
-            onChangeText={(value) => setForm((prev) => ({ ...prev, description: value }))}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Category"
-            value={form.category}
-            onChangeText={(value) => setForm((prev) => ({ ...prev, category: value }))}
-          />
-
-          <Text style={styles.label}>Priority</Text>
-          <View style={styles.rowWrap}>
-            {PRIORITIES.map((level) => (
-              <TouchableOpacity
-                key={level}
-                style={[styles.pill, form.priority === level && styles.pillActive]}
-                onPress={() => setForm((prev) => ({ ...prev, priority: level }))}
-              >
-                <Text style={form.priority === level ? styles.pillTextActive : styles.pillText}>
-                  {level}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity style={styles.primaryButton} onPress={pickImage}>
-            <Text style={styles.primaryButtonText}>Pick image</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton} onPress={async () => {
-            try {
-              const { status } = await Location.requestForegroundPermissionsAsync();
-              if (status !== 'granted') {
-                Alert.alert('Permission needed', 'Please allow location access.');
-                return;
-              }
-              const current = await Location.getCurrentPositionAsync({});
-              const [place] = await Location.reverseGeocodeAsync({
-                latitude: current.coords.latitude,
-                longitude: current.coords.longitude,
-              });
-              const address = place
-                ? [place.name, place.street, place.city, place.region]
-                    .filter(Boolean)
-                    .join(', ')
-                : '';
-              setLocation({
-                latitude: current.coords.latitude,
-                longitude: current.coords.longitude,
-                address,
-              });
-            } catch (error) {
-              Alert.alert('Location failed', error?.message || 'Please try again.');
-            }
-          }}>
-            <Text style={styles.secondaryButtonText}>
-              {location
-                ? `${location.address || 'Location'} (${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)})`
-                : 'Use current location'}
-            </Text>
-          </TouchableOpacity>
-          {imageBase64 ? (
-            <Image
-              source={{ uri: `data:image/jpeg;base64,${imageBase64}` }}
-              style={styles.preview}
-            />
-          ) : null}
-
-          <Button
-            title={submitting ? 'Submitting...' : 'Submit grievance'}
-            onPress={submitGrievance}
-            disabled={submitting || !canSubmit}
-          />
-
-          <Text style={[styles.title, styles.listTitle]}>My Grievances</Text>
-          {grievances.length === 0 && <Text style={styles.emptyText}>No grievances yet.</Text>}
-
-          {grievances.map((item) => (
-            <View key={item.id} style={styles.listItem}>
-              <TouchableOpacity onPress={() => setSelectedGrievance(item)}>
-                <Text style={styles.listTitleText}>{item.title}</Text>
-                <Text style={styles.metaText}>Status: {item.status}</Text>
-                <Text style={styles.metaText}>Created: {formatDate(item.createdAt)}</Text>
-              </TouchableOpacity>
-              <Button title="Delete" color="#d9534f" onPress={() => deleteGrievance(item.id)} />
-            </View>
-          ))}
-        </ScrollView>
-        <StatusBar style="auto" />
-      </SafeAreaView>
+      <UserNavigation currentUser={user} />
     </SafeAreaProvider>
   );
 }
