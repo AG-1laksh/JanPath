@@ -14,8 +14,10 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useLanguage } from '../../i18n';
 
 const RequestsTab = ({ currentUser }) => {
+  const { t } = useLanguage();
   const [pendingRequests, setPendingRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [grievanceDetail, setGrievanceDetail] = useState(null);
@@ -79,9 +81,9 @@ const RequestsTab = ({ currentUser }) => {
       });
 
       setSelectedRequest(null);
-      Alert.alert('Success', 'Request approved and grievance assigned.');
+      Alert.alert(t('common.success'), t('admin.requestApproved'));
     } catch (error) {
-      Alert.alert('Error', error?.message || 'Failed to approve request.');
+      Alert.alert(t('common.error'), error?.message || t('admin.approveRequestError'));
     }
   };
 
@@ -91,9 +93,9 @@ const RequestsTab = ({ currentUser }) => {
         status: 'Rejected',
       });
       setSelectedRequest(null);
-      Alert.alert('Denied', 'Request has been denied.');
+      Alert.alert(t('admin.reject'), t('admin.requestDenied'));
     } catch (error) {
-      Alert.alert('Error', error?.message || 'Failed to deny request.');
+      Alert.alert(t('common.error'), error?.message || t('admin.denyRequestError'));
     }
   };
 
@@ -102,22 +104,22 @@ const RequestsTab = ({ currentUser }) => {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => setSelectedRequest(null)}>
           <Ionicons name="arrow-back" size={24} color="#3b82f6" />
-          <Text style={styles.backButtonText}>Back to Requests</Text>
+          <Text style={styles.backButtonText}>{t('common.back')}</Text>
         </TouchableOpacity>
 
         <View style={styles.detailCard}>
-          <Text style={styles.detailTitle}>Worker Request Details</Text>
-          
+          <Text style={styles.detailTitle}>{t('admin.workerRequestDetails')}</Text>
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Worker ID</Text>
             <Text style={styles.detailValue}>{selectedRequest.workerId}</Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Grievance ID</Text>
             <Text style={styles.detailValue}>{selectedRequest.grievanceId}</Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Reason</Text>
             <Text style={styles.detailValue}>{selectedRequest.reason}</Text>
@@ -126,9 +128,9 @@ const RequestsTab = ({ currentUser }) => {
 
         {grievanceDetail && (
           <View style={styles.grievanceCard}>
-            <Text style={styles.cardSectionTitle}>Grievance Information</Text>
+            <Text style={styles.cardSectionTitle}>{t('admin.grievanceInfo')}</Text>
             <Text style={styles.grievanceTitle}>{grievanceDetail.title}</Text>
-            
+
             <View style={styles.tagRow}>
               <View style={styles.tag}>
                 <Text style={styles.tagText}>{grievanceDetail.category}</Text>
@@ -167,15 +169,15 @@ const RequestsTab = ({ currentUser }) => {
             onPress={() => approveRequest(selectedRequest)}
           >
             <Ionicons name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Approve</Text>
+            <Text style={styles.actionButtonText}>{t('admin.approve')}</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.actionButton, styles.denyButton]}
             onPress={() => denyRequest(selectedRequest)}
           >
             <Ionicons name="close-circle" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Deny</Text>
+            <Text style={styles.actionButtonText}>{t('admin.deny')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -185,7 +187,7 @@ const RequestsTab = ({ currentUser }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Worker Requests</Text>
+        <Text style={styles.headerTitle}>{t('admin.workerRequests')}</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{pendingRequests.length}</Text>
         </View>
@@ -194,8 +196,8 @@ const RequestsTab = ({ currentUser }) => {
       {pendingRequests.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="document-text-outline" size={64} color="#cbd5e1" />
-          <Text style={styles.emptyText}>No pending requests</Text>
-          <Text style={styles.emptySubtext}>Worker requests will appear here</Text>
+          <Text style={styles.emptyText}>{t('admin.noPendingRequests')}</Text>
+          <Text style={styles.emptySubtext}>{t('admin.noPendingRequestsSubtext')}</Text>
         </View>
       ) : (
         <FlatList

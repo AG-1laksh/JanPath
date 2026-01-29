@@ -14,8 +14,10 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useLanguage } from '../../i18n';
 
 const AssignTab = ({ currentUser }) => {
+  const { t } = useLanguage();
   const [unassignedGrievances, setUnassignedGrievances] = useState([]);
   const [registeredWorkers, setRegisteredWorkers] = useState([]);
   const [selectedGrievance, setSelectedGrievance] = useState(null);
@@ -95,9 +97,9 @@ const AssignTab = ({ currentUser }) => {
       });
 
       setSelectedGrievance(null);
-      Alert.alert('Success', 'Grievance assigned successfully.');
+      Alert.alert(t('common.success'), t('admin.assignSuccess'));
     } catch (error) {
-      Alert.alert('Error', error?.message || 'Failed to assign grievance.');
+      Alert.alert(t('common.error'), error?.message || t('admin.assignError'));
     } finally {
       setAssigning(false);
     }
@@ -113,13 +115,13 @@ const AssignTab = ({ currentUser }) => {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => setSelectedGrievance(null)}>
           <Ionicons name="arrow-back" size={24} color="#3b82f6" />
-          <Text style={styles.backButtonText}>Back to Grievances</Text>
+          <Text style={styles.backButtonText}>{t('common.back')}</Text>
         </TouchableOpacity>
 
         {grievanceDetail && (
           <View style={styles.grievanceCard}>
             <Text style={styles.grievanceTitle}>{grievanceDetail.title}</Text>
-            
+
             <View style={styles.tagRow}>
               <View style={styles.tag}>
                 <Text style={styles.tagText}>{grievanceDetail.category}</Text>
@@ -149,13 +151,13 @@ const AssignTab = ({ currentUser }) => {
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Select Worker to Assign</Text>
-        
+        <Text style={styles.sectionTitle}>{t('admin.selectWorker')}</Text>
+
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#94a3b8" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by name or department..."
+            placeholder={t('admin.searchPlaceholder')}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#94a3b8"
@@ -174,11 +176,11 @@ const AssignTab = ({ currentUser }) => {
             </View>
             <View style={styles.workerInfo}>
               <Text style={styles.workerName}>{worker.name}</Text>
-              <Text style={styles.workerDept}>{worker.department || 'No Department'}</Text>
+              <Text style={styles.workerDept}>{worker.department || t('admin.noDepartment')}</Text>
             </View>
             <View style={[styles.statusIndicator, worker.isWorking ? styles.busyIndicator : styles.availableIndicator]}>
               <Text style={[styles.statusText, worker.isWorking ? styles.busyText : styles.availableText]}>
-                {worker.isWorking ? 'Busy' : 'Available'}
+                {worker.isWorking ? t('status.busy') : t('worker.available')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -190,7 +192,7 @@ const AssignTab = ({ currentUser }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Assign Grievances</Text>
+        <Text style={styles.headerTitle}>{t('admin.assignTasks')}</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{unassignedGrievances.length}</Text>
         </View>
@@ -199,8 +201,8 @@ const AssignTab = ({ currentUser }) => {
       {unassignedGrievances.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="checkmark-done-circle-outline" size={64} color="#22c55e" />
-          <Text style={styles.emptyText}>All caught up!</Text>
-          <Text style={styles.emptySubtext}>No unassigned grievances</Text>
+          <Text style={styles.emptyText}>{t('admin.allCaughtUp')}</Text>
+          <Text style={styles.emptySubtext}>{t('admin.noUnassigned')}</Text>
         </View>
       ) : (
         <FlatList

@@ -10,8 +10,10 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useLanguage } from '../../i18n';
 
 const DashboardTab = ({ currentUser, onNavigate }) => {
+  const { t } = useLanguage();
   const [stats, setStats] = useState({
     pendingRequests: 0,
     pendingSignups: 0,
@@ -45,11 +47,11 @@ const DashboardTab = ({ currentUser, onNavigate }) => {
     );
 
     const unsubs = [
-      onSnapshot(requestsQuery, (snap) => 
+      onSnapshot(requestsQuery, (snap) =>
         setStats(s => ({ ...s, pendingRequests: snap.size }))),
-      onSnapshot(signupsQuery, (snap) => 
+      onSnapshot(signupsQuery, (snap) =>
         setStats(s => ({ ...s, pendingSignups: snap.size }))),
-      onSnapshot(unassignedQuery, (snap) => 
+      onSnapshot(unassignedQuery, (snap) =>
         setStats(s => ({ ...s, unassignedGrievances: snap.size }))),
       onSnapshot(workersQuery, (snap) => {
         const workers = snap.docs.map(d => d.data());
@@ -70,7 +72,7 @@ const DashboardTab = ({ currentUser, onNavigate }) => {
 
   const statCards = [
     {
-      title: 'Pending Requests',
+      title: t('admin.pendingRequests'),
       value: stats.pendingRequests,
       icon: 'git-pull-request',
       color: '#f59e0b',
@@ -78,7 +80,7 @@ const DashboardTab = ({ currentUser, onNavigate }) => {
       tab: 'Requests',
     },
     {
-      title: 'Pending Signups',
+      title: t('admin.pendingSignups'),
       value: stats.pendingSignups,
       icon: 'person-add',
       color: '#8b5cf6',
@@ -86,7 +88,7 @@ const DashboardTab = ({ currentUser, onNavigate }) => {
       tab: 'Signups',
     },
     {
-      title: 'Unassigned',
+      title: t('admin.unassigned'),
       value: stats.unassignedGrievances,
       icon: 'clipboard',
       color: '#ef4444',
@@ -94,7 +96,7 @@ const DashboardTab = ({ currentUser, onNavigate }) => {
       tab: 'Assign',
     },
     {
-      title: 'Total Workers',
+      title: t('admin.totalWorkers'),
       value: stats.totalWorkers,
       icon: 'people',
       color: '#3b82f6',
@@ -121,15 +123,15 @@ const DashboardTab = ({ currentUser, onNavigate }) => {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Welcome Section */}
       <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeText}>Welcome back,</Text>
-        <Text style={styles.welcomeName}>Admin</Text>
+        <Text style={styles.welcomeText}>{t('dashboard.welcomeBack')}</Text>
+        <Text style={styles.welcomeName}>{t('roles.admin')}</Text>
       </View>
 
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         {statCards.map((card, index) => (
-          <TouchableOpacity 
-            key={index} 
+          <TouchableOpacity
+            key={index}
             style={styles.statCard}
             onPress={() => onNavigate?.(card.tab)}
           >
@@ -144,51 +146,51 @@ const DashboardTab = ({ currentUser, onNavigate }) => {
 
       {/* Quick Actions */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={styles.sectionTitle}>{t('worker.quickActions')}</Text>
         <View style={styles.actionsRow}>
           <TouchableOpacity style={styles.actionCard} onPress={() => onNavigate?.('Assign')}>
             <View style={[styles.actionIcon, { backgroundColor: '#eff6ff' }]}>
               <Ionicons name="add-circle" size={24} color="#3b82f6" />
             </View>
-            <Text style={styles.actionText}>Assign Task</Text>
+            <Text style={styles.actionText}>{t('admin.assignTask')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionCard} onPress={() => onNavigate?.('Signups')}>
             <View style={[styles.actionIcon, { backgroundColor: '#f0fdf4' }]}>
               <Ionicons name="person-add" size={24} color="#22c55e" />
             </View>
-            <Text style={styles.actionText}>Review Signups</Text>
+            <Text style={styles.actionText}>{t('admin.reviewSignups')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionCard} onPress={() => onNavigate?.('Workers')}>
             <View style={[styles.actionIcon, { backgroundColor: '#fef3c7' }]}>
               <Ionicons name="analytics" size={24} color="#f59e0b" />
             </View>
-            <Text style={styles.actionText}>View Workers</Text>
+            <Text style={styles.actionText}>{t('admin.viewWorkers')}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Worker Availability */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Worker Availability</Text>
+        <Text style={styles.sectionTitle}>{t('admin.workerAvailability')}</Text>
         <View style={styles.availabilityCard}>
           <View style={styles.availabilityRow}>
             <View style={styles.availabilityItem}>
               <View style={[styles.availabilityDot, { backgroundColor: '#22c55e' }]} />
-              <Text style={styles.availabilityLabel}>Available</Text>
+              <Text style={styles.availabilityLabel}>{t('worker.available')}</Text>
               <Text style={styles.availabilityValue}>{stats.availableWorkers}</Text>
             </View>
             <View style={styles.availabilityItem}>
               <View style={[styles.availabilityDot, { backgroundColor: '#f59e0b' }]} />
-              <Text style={styles.availabilityLabel}>Working</Text>
+              <Text style={styles.availabilityLabel}>{t('admin.working')}</Text>
               <Text style={styles.availabilityValue}>{stats.totalWorkers - stats.availableWorkers}</Text>
             </View>
           </View>
           <View style={styles.progressBar}>
-            <View 
+            <View
               style={[
-                styles.progressFill, 
+                styles.progressFill,
                 { width: `${stats.totalWorkers > 0 ? (stats.availableWorkers / stats.totalWorkers) * 100 : 0}%` }
-              ]} 
+              ]}
             />
           </View>
         </View>
@@ -197,19 +199,19 @@ const DashboardTab = ({ currentUser, onNavigate }) => {
       {/* Recent Grievances */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Grievances</Text>
+          <Text style={styles.sectionTitle}>{t('admin.recentGrievances')}</Text>
           <TouchableOpacity onPress={() => onNavigate?.('Assign')}>
-            <Text style={styles.viewAllText}>View All</Text>
+            <Text style={styles.viewAllText}>{t('common.viewAll')}</Text>
           </TouchableOpacity>
         </View>
-        
+
         {recentGrievances.map((grievance) => (
           <View key={grievance.id} style={styles.grievanceItem}>
             <View style={styles.grievanceIcon}>
-              <Ionicons 
-                name={grievance.assignedWorkerId ? 'checkmark-circle' : 'time'} 
-                size={20} 
-                color={grievance.assignedWorkerId ? '#22c55e' : '#f59e0b'} 
+              <Ionicons
+                name={grievance.assignedWorkerId ? 'checkmark-circle' : 'time'}
+                size={20}
+                color={grievance.assignedWorkerId ? '#22c55e' : '#f59e0b'}
               />
             </View>
             <View style={styles.grievanceInfo}>

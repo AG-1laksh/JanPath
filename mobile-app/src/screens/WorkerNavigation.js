@@ -5,23 +5,25 @@ import { signOut } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy, addDoc, updateDoc, serverTimestamp, limit } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import ProfileScreen from './ProfileScreen';
+import { useLanguage, LANGUAGES } from '../i18n';
 
 // Dashboard Tab for Worker
 const WorkerDashboard = ({ currentUser, assignedGrievances, onNavigate }) => {
+  const { t } = useLanguage();
   const activeGrievances = assignedGrievances.filter(g => g.status !== 'Completed' && g.status !== 'Resolved');
   const completedGrievances = assignedGrievances.filter(g => g.status === 'Completed' || g.status === 'Resolved');
 
   const stats = [
-    { title: 'Active Tasks', value: activeGrievances.length, icon: 'time', color: '#f59e0b', bgColor: '#fef3c7', tab: 'Assigned' },
-    { title: 'Completed', value: completedGrievances.length, icon: 'checkmark-circle', color: '#22c55e', bgColor: '#f0fdf4', tab: 'Assigned' },
-    { title: 'Total Assigned', value: assignedGrievances.length, icon: 'clipboard', color: '#3b82f6', bgColor: '#eff6ff', tab: 'Assigned' },
+    { title: t('worker.activeTasks'), value: activeGrievances.length, icon: 'time', color: '#f59e0b', bgColor: '#fef3c7', tab: 'Assigned' },
+    { title: t('worker.completed'), value: completedGrievances.length, icon: 'checkmark-circle', color: '#22c55e', bgColor: '#f0fdf4', tab: 'Assigned' },
+    { title: t('worker.totalAssigned'), value: assignedGrievances.length, icon: 'clipboard', color: '#3b82f6', bgColor: '#eff6ff', tab: 'Assigned' },
   ];
 
   return (
     <ScrollView style={dashStyles.container} contentContainerStyle={dashStyles.content}>
       <View style={dashStyles.welcome}>
-        <Text style={dashStyles.welcomeText}>Welcome back,</Text>
-        <Text style={dashStyles.welcomeName}>Worker</Text>
+        <Text style={dashStyles.welcomeText}>{t('dashboard.welcomeBack')}</Text>
+        <Text style={dashStyles.welcomeName}>{t('roles.worker')}</Text>
       </View>
 
       <View style={dashStyles.statsRow}>
@@ -37,25 +39,25 @@ const WorkerDashboard = ({ currentUser, assignedGrievances, onNavigate }) => {
       </View>
 
       <View style={dashStyles.section}>
-        <Text style={dashStyles.sectionTitle}>Quick Actions</Text>
+        <Text style={dashStyles.sectionTitle}>{t('worker.quickActions')}</Text>
         <View style={dashStyles.actionsRow}>
           <TouchableOpacity style={dashStyles.actionCard} onPress={() => onNavigate?.('Assigned')}>
             <View style={[dashStyles.actionIcon, { backgroundColor: '#eff6ff' }]}>
               <Ionicons name="list" size={24} color="#3b82f6" />
             </View>
-            <Text style={dashStyles.actionText}>My Tasks</Text>
+            <Text style={dashStyles.actionText}>{t('worker.myTasks')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={dashStyles.actionCard} onPress={() => onNavigate?.('Available')}>
             <View style={[dashStyles.actionIcon, { backgroundColor: '#f0fdf4' }]}>
               <Ionicons name="search" size={24} color="#22c55e" />
             </View>
-            <Text style={dashStyles.actionText}>Find Tasks</Text>
+            <Text style={dashStyles.actionText}>{t('worker.findTasks')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={dashStyles.actionCard} onPress={() => onNavigate?.('Requests')}>
             <View style={[dashStyles.actionIcon, { backgroundColor: '#fef3c7' }]}>
               <Ionicons name="git-pull-request" size={24} color="#f59e0b" />
             </View>
-            <Text style={dashStyles.actionText}>My Requests</Text>
+            <Text style={dashStyles.actionText}>{t('worker.myRequests')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -63,9 +65,9 @@ const WorkerDashboard = ({ currentUser, assignedGrievances, onNavigate }) => {
       {activeGrievances.length > 0 && (
         <View style={dashStyles.section}>
           <View style={dashStyles.sectionHeader}>
-            <Text style={dashStyles.sectionTitle}>Active Tasks</Text>
+            <Text style={dashStyles.sectionTitle}>{t('worker.activeTasks')}</Text>
             <TouchableOpacity onPress={() => onNavigate?.('Assigned')}>
-              <Text style={dashStyles.viewAll}>View All</Text>
+              <Text style={dashStyles.viewAll}>{t('common.viewAll')}</Text>
             </TouchableOpacity>
           </View>
           {activeGrievances.slice(0, 3).map((item) => (
@@ -120,6 +122,7 @@ const dashStyles = StyleSheet.create({
 
 // Assigned Tasks Tab
 const AssignedTab = ({ grievances, onSelectGrievance }) => {
+  const { t } = useLanguage();
   const activeGrievances = grievances.filter(g => g.status !== 'Completed' && g.status !== 'Resolved');
   const completedGrievances = grievances.filter(g => g.status === 'Completed' || g.status === 'Resolved');
   const [filter, setFilter] = useState('active');
@@ -129,20 +132,20 @@ const AssignedTab = ({ grievances, onSelectGrievance }) => {
   return (
     <View style={listStyles.container}>
       <View style={listStyles.filterRow}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[listStyles.filterBtn, filter === 'active' && listStyles.filterBtnActive]}
           onPress={() => setFilter('active')}
         >
           <Text style={[listStyles.filterText, filter === 'active' && listStyles.filterTextActive]}>
-            Active ({activeGrievances.length})
+            {t('dashboard.active')} ({activeGrievances.length})
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[listStyles.filterBtn, filter === 'completed' && listStyles.filterBtnActive]}
           onPress={() => setFilter('completed')}
         >
           <Text style={[listStyles.filterText, filter === 'completed' && listStyles.filterTextActive]}>
-            Completed ({completedGrievances.length})
+            {t('worker.completed')} ({completedGrievances.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -150,7 +153,7 @@ const AssignedTab = ({ grievances, onSelectGrievance }) => {
       {displayGrievances.length === 0 ? (
         <View style={listStyles.empty}>
           <Ionicons name={filter === 'active' ? 'clipboard-outline' : 'checkmark-done-circle-outline'} size={48} color="#cbd5e1" />
-          <Text style={listStyles.emptyText}>No {filter} tasks</Text>
+          <Text style={listStyles.emptyText}>{t('complaints.noComplaints')}</Text>
         </View>
       ) : (
         <FlatList
@@ -161,10 +164,10 @@ const AssignedTab = ({ grievances, onSelectGrievance }) => {
             <TouchableOpacity style={listStyles.card} onPress={() => onSelectGrievance(item, 'assigned')}>
               <View style={listStyles.cardHeader}>
                 <View style={[listStyles.cardIcon, { backgroundColor: item.status === 'In Progress' ? '#fef3c7' : item.status === 'Completed' ? '#f0fdf4' : '#eff6ff' }]}>
-                  <Ionicons 
-                    name={item.status === 'Completed' ? 'checkmark-circle' : item.status === 'In Progress' ? 'time' : 'clipboard'} 
-                    size={20} 
-                    color={item.status === 'In Progress' ? '#f59e0b' : item.status === 'Completed' ? '#22c55e' : '#3b82f6'} 
+                  <Ionicons
+                    name={item.status === 'Completed' ? 'checkmark-circle' : item.status === 'In Progress' ? 'time' : 'clipboard'}
+                    size={20}
+                    color={item.status === 'In Progress' ? '#f59e0b' : item.status === 'Completed' ? '#22c55e' : '#3b82f6'}
                   />
                 </View>
                 <View style={listStyles.cardInfo}>
@@ -187,13 +190,14 @@ const AssignedTab = ({ grievances, onSelectGrievance }) => {
 
 // Available Tasks Tab
 const AvailableTab = ({ grievances, onSelectGrievance }) => {
+  const { t } = useLanguage();
   return (
     <View style={listStyles.container}>
       {grievances.length === 0 ? (
         <View style={listStyles.empty}>
           <Ionicons name="search-outline" size={48} color="#cbd5e1" />
-          <Text style={listStyles.emptyText}>No available tasks</Text>
-          <Text style={listStyles.emptySubtext}>Check back later for new tasks</Text>
+          <Text style={listStyles.emptyText}>{t('worker.noAvailableTasks')}</Text>
+          <Text style={listStyles.emptySubtext}>{t('worker.checkBackLater')}</Text>
         </View>
       ) : (
         <FlatList
@@ -226,6 +230,7 @@ const AvailableTab = ({ grievances, onSelectGrievance }) => {
 
 // My Requests Tab
 const RequestsTab = ({ currentUser }) => {
+  const { t } = useLanguage();
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
@@ -254,8 +259,8 @@ const RequestsTab = ({ currentUser }) => {
       {requests.length === 0 ? (
         <View style={listStyles.empty}>
           <Ionicons name="git-pull-request-outline" size={48} color="#cbd5e1" />
-          <Text style={listStyles.emptyText}>No requests yet</Text>
-          <Text style={listStyles.emptySubtext}>Request access to available tasks</Text>
+          <Text style={listStyles.emptyText}>{t('worker.noRequests')}</Text>
+          <Text style={listStyles.emptySubtext}>{t('worker.requestAccess')}</Text>
         </View>
       ) : (
         <FlatList
@@ -268,14 +273,14 @@ const RequestsTab = ({ currentUser }) => {
               <View style={listStyles.card}>
                 <View style={listStyles.cardHeader}>
                   <View style={[listStyles.cardIcon, { backgroundColor: colors.bg }]}>
-                    <Ionicons 
-                      name={item.status === 'Approved' ? 'checkmark-circle' : item.status === 'Rejected' ? 'close-circle' : 'time'} 
-                      size={20} 
-                      color={colors.text} 
+                    <Ionicons
+                      name={item.status === 'Approved' ? 'checkmark-circle' : item.status === 'Rejected' ? 'close-circle' : 'time'}
+                      size={20}
+                      color={colors.text}
                     />
                   </View>
                   <View style={listStyles.cardInfo}>
-                    <Text style={listStyles.cardTitle} numberOfLines={1}>Task Request</Text>
+                    <Text style={listStyles.cardTitle} numberOfLines={1}>{t('worker.taskRequest')}</Text>
                     <Text style={listStyles.cardMeta}>{item.reason}</Text>
                   </View>
                 </View>
@@ -316,6 +321,7 @@ const listStyles = StyleSheet.create({
 
 // Grievance Detail Screen
 const GrievanceDetail = ({ grievance, currentUser, mode, onBack }) => {
+  const { t } = useLanguage();
   const [status, setStatus] = useState(grievance?.status || '');
   const [loading, setLoading] = useState(false);
   const [progressText, setProgressText] = useState('');
@@ -334,9 +340,9 @@ const GrievanceDetail = ({ grievance, currentUser, mode, onBack }) => {
         timestamp: serverTimestamp(),
       });
       setStatus(nextStatus);
-      Alert.alert('Updated', `Status set to ${nextStatus}`);
+      Alert.alert(t('common.updated'), `${t('common.statusUpdated')} ${nextStatus}`);
     } catch (error) {
-      Alert.alert('Update failed', error?.message || 'Please try again.');
+      Alert.alert(t('errors.updateFailed'), error?.message || t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -344,7 +350,7 @@ const GrievanceDetail = ({ grievance, currentUser, mode, onBack }) => {
 
   const requestAccess = async () => {
     if (!grievance?.id || !currentUser?.uid || !requestReason.trim()) {
-      Alert.alert('Missing reason', 'Please add a short reason for the request.');
+      Alert.alert(t('errors.missingReason'), t('errors.missingReason'));
       return;
     }
     try {
@@ -357,10 +363,10 @@ const GrievanceDetail = ({ grievance, currentUser, mode, onBack }) => {
         requestedAt: serverTimestamp(),
       });
       setRequestReason('');
-      Alert.alert('Requested', 'Access request sent to admin.');
+      Alert.alert(t('common.success'), t('common.requestSent'));
       onBack();
     } catch (error) {
-      Alert.alert('Request failed', error?.message || 'Please try again.');
+      Alert.alert(t('errors.requestFailed'), error?.message || t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -382,9 +388,9 @@ const GrievanceDetail = ({ grievance, currentUser, mode, onBack }) => {
         timestamp: serverTimestamp(),
       });
       setProgressText('');
-      Alert.alert('Update sent', 'Progress update added.');
+      Alert.alert(t('common.updateSent'), t('common.updateSent'));
     } catch (error) {
-      Alert.alert('Update failed', error?.message || 'Please try again.');
+      Alert.alert(t('errors.updateFailed'), error?.message || t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -411,13 +417,13 @@ const GrievanceDetail = ({ grievance, currentUser, mode, onBack }) => {
       </View>
 
       <View style={detailStyles.card}>
-        <Text style={detailStyles.sectionTitle}>Description</Text>
+        <Text style={detailStyles.sectionTitle}>{t('create.description')}</Text>
         <Text style={detailStyles.description}>{grievance?.description}</Text>
       </View>
 
       {grievance?.location && (
         <View style={detailStyles.card}>
-          <Text style={detailStyles.sectionTitle}>Location</Text>
+          <Text style={detailStyles.sectionTitle}>{t('complaints.location')}</Text>
           <View style={detailStyles.locationRow}>
             <Ionicons name="location" size={20} color="#3b82f6" />
             <Text style={detailStyles.locationText}>
@@ -429,18 +435,18 @@ const GrievanceDetail = ({ grievance, currentUser, mode, onBack }) => {
 
       {grievance?.imageBase64 && (
         <View style={detailStyles.card}>
-          <Text style={detailStyles.sectionTitle}>Attached Image</Text>
+          <Text style={detailStyles.sectionTitle}>{t('complaints.attachedImage')}</Text>
           <Image source={{ uri: `data:image/jpeg;base64,${grievance.imageBase64}` }} style={detailStyles.image} />
         </View>
       )}
 
       <View style={detailStyles.card}>
-        <Text style={detailStyles.sectionTitle}>Current Status</Text>
+        <Text style={detailStyles.sectionTitle}>{t('worker.currentStatus')}</Text>
         <View style={[detailStyles.statusCard, { backgroundColor: status === 'In Progress' ? '#fef3c7' : status === 'Completed' ? '#f0fdf4' : '#eff6ff' }]}>
-          <Ionicons 
-            name={status === 'Completed' ? 'checkmark-circle' : status === 'In Progress' ? 'time' : 'clipboard'} 
-            size={24} 
-            color={status === 'In Progress' ? '#f59e0b' : status === 'Completed' ? '#22c55e' : '#3b82f6'} 
+          <Ionicons
+            name={status === 'Completed' ? 'checkmark-circle' : status === 'In Progress' ? 'time' : 'clipboard'}
+            size={24}
+            color={status === 'In Progress' ? '#f59e0b' : status === 'Completed' ? '#22c55e' : '#3b82f6'}
           />
           <Text style={[detailStyles.statusText, { color: status === 'In Progress' ? '#f59e0b' : status === 'Completed' ? '#22c55e' : '#3b82f6' }]}>
             {status}
@@ -450,58 +456,58 @@ const GrievanceDetail = ({ grievance, currentUser, mode, onBack }) => {
 
       {mode === 'available' ? (
         <View style={detailStyles.card}>
-          <Text style={detailStyles.sectionTitle}>Request Access</Text>
+          <Text style={detailStyles.sectionTitle}>{t('worker.requestAccess')}</Text>
           <TextInput
             style={detailStyles.input}
-            placeholder="Write a short reason for the request..."
+            placeholder={t('worker.writeReason')}
             value={requestReason}
             onChangeText={setRequestReason}
             multiline
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[detailStyles.primaryBtn, (!canRequest || loading) && detailStyles.disabledBtn]}
             onPress={requestAccess}
             disabled={!canRequest || loading}
           >
             <Ionicons name="git-pull-request" size={20} color="#fff" />
-            <Text style={detailStyles.primaryBtnText}>{loading ? 'Sending...' : 'Request Access'}</Text>
+            <Text style={detailStyles.primaryBtnText}>{loading ? t('worker.sending') : t('worker.requestAccess')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={detailStyles.card}>
-          <Text style={detailStyles.sectionTitle}>Update Progress</Text>
+          <Text style={detailStyles.sectionTitle}>{t('worker.updateProgress')}</Text>
           <TextInput
             style={detailStyles.input}
-            placeholder="Write a progress update..."
+            placeholder={t('worker.writeUpdate')}
             value={progressText}
             onChangeText={setProgressText}
             multiline
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[detailStyles.secondaryBtn, (loading || !progressText.trim()) && detailStyles.disabledBtn]}
             onPress={addProgressUpdate}
             disabled={loading || !progressText.trim()}
           >
             <Ionicons name="chatbubble" size={18} color="#3b82f6" />
-            <Text style={detailStyles.secondaryBtnText}>Add Update</Text>
+            <Text style={detailStyles.secondaryBtnText}>{t('worker.addUpdate')}</Text>
           </TouchableOpacity>
 
           <View style={detailStyles.actionRow}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[detailStyles.actionBtn, { backgroundColor: '#3b82f6' }, (loading || !canStart) && detailStyles.disabledBtn]}
               onPress={() => updateStatus('In Progress', 'Work started')}
               disabled={loading || !canStart}
             >
               <Ionicons name="play" size={18} color="#fff" />
-              <Text style={detailStyles.actionBtnText}>Start Work</Text>
+              <Text style={detailStyles.actionBtnText}>{t('worker.startWork')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[detailStyles.actionBtn, { backgroundColor: '#22c55e' }, (loading || !canComplete) && detailStyles.disabledBtn]}
               onPress={() => updateStatus('Completed', 'Work completed')}
               disabled={loading || !canComplete}
             >
               <Ionicons name="checkmark" size={18} color="#fff" />
-              <Text style={detailStyles.actionBtnText}>Complete</Text>
+              <Text style={detailStyles.actionBtnText}>{t('worker.complete')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -538,42 +544,79 @@ const detailStyles = StyleSheet.create({
 
 // Settings Screen
 const SettingsScreen = () => {
+  const { language, changeLanguage, t } = useLanguage();
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+
+  const currentLang = LANGUAGES.find(l => l.code === language);
 
   return (
     <ScrollView style={settingsStyles.container}>
       <View style={settingsStyles.section}>
-        <Text style={settingsStyles.sectionTitle}>Notifications</Text>
+        <Text style={settingsStyles.sectionTitle}>{t('settings.notifications')}</Text>
         <View style={settingsStyles.sectionContent}>
           <View style={settingsStyles.item}>
             <View style={settingsStyles.itemIcon}><Ionicons name="notifications" size={20} color="#3b82f6" /></View>
-            <Text style={settingsStyles.itemLabel}>Push Notifications</Text>
+            <Text style={settingsStyles.itemLabel}>{t('settings.pushNotifications')}</Text>
             <Switch value={pushNotifications} onValueChange={setPushNotifications} trackColor={{ false: '#e2e8f0', true: '#bfdbfe' }} thumbColor={pushNotifications ? '#3b82f6' : '#94a3b8'} />
-          </View>
-          <View style={[settingsStyles.item, { borderBottomWidth: 0 }]}>
-            <View style={settingsStyles.itemIcon}><Ionicons name="mail" size={20} color="#3b82f6" /></View>
-            <Text style={settingsStyles.itemLabel}>Email Notifications</Text>
-            <Switch value={emailNotifications} onValueChange={setEmailNotifications} trackColor={{ false: '#e2e8f0', true: '#bfdbfe' }} thumbColor={emailNotifications ? '#3b82f6' : '#94a3b8'} />
           </View>
         </View>
       </View>
+
       <View style={settingsStyles.section}>
-        <Text style={settingsStyles.sectionTitle}>Account</Text>
+        <Text style={settingsStyles.sectionTitle}>{t('settings.language')}</Text>
+        <View style={settingsStyles.sectionContent}>
+          <TouchableOpacity style={[settingsStyles.item, { borderBottomWidth: 0 }]} onPress={() => setShowLanguageModal(true)}>
+            <View style={settingsStyles.itemIcon}><Ionicons name="language" size={20} color="#3b82f6" /></View>
+            <Text style={settingsStyles.itemLabel}>{currentLang?.nativeName || 'English'}</Text>
+            <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={settingsStyles.section}>
+        <Text style={settingsStyles.sectionTitle}>{t('settings.account')}</Text>
         <View style={settingsStyles.sectionContent}>
           <TouchableOpacity style={settingsStyles.item}>
             <View style={settingsStyles.itemIcon}><Ionicons name="lock-closed" size={20} color="#3b82f6" /></View>
-            <Text style={settingsStyles.itemLabel}>Change Password</Text>
+            <Text style={settingsStyles.itemLabel}>{t('settings.changePassword')}</Text>
             <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
           </TouchableOpacity>
           <TouchableOpacity style={[settingsStyles.item, { borderBottomWidth: 0 }]}>
             <View style={settingsStyles.itemIcon}><Ionicons name="shield-checkmark" size={20} color="#3b82f6" /></View>
-            <Text style={settingsStyles.itemLabel}>Privacy Policy</Text>
+            <Text style={settingsStyles.itemLabel}>{t('settings.privacyPolicy')}</Text>
             <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={settingsStyles.version}>Version 1.0.0</Text>
+      <Text style={settingsStyles.version}>{t('settings.version')} 1.0.0</Text>
+
+      <Modal visible={showLanguageModal} animationType="slide" transparent>
+        <View style={settingsStyles.modalOverlay}>
+          <View style={settingsStyles.modalContent}>
+            <View style={settingsStyles.modalHeader}>
+              <Text style={settingsStyles.modalTitle}>{t('settings.selectLanguage')}</Text>
+              <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {LANGUAGES.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[settingsStyles.langItem, language === lang.code && settingsStyles.langItemActive]}
+                  onPress={() => { changeLanguage(lang.code); setShowLanguageModal(false); }}
+                >
+                  <Text style={[settingsStyles.langName, language === lang.code && settingsStyles.langNameActive]}>{lang.nativeName}</Text>
+                  <Text style={settingsStyles.langNameEn}>{lang.name}</Text>
+                  {language === lang.code && <Ionicons name="checkmark-circle" size={22} color="#3b82f6" />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -587,35 +630,46 @@ const settingsStyles = StyleSheet.create({
   itemIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
   itemLabel: { flex: 1, fontSize: 15, color: '#1e293b', fontWeight: '500' },
   version: { textAlign: 'center', color: '#94a3b8', fontSize: 12, marginTop: 20 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '70%', paddingBottom: 40 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b' },
+  langItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', gap: 12 },
+  langItemActive: { backgroundColor: '#eff6ff' },
+  langName: { fontSize: 16, fontWeight: '600', color: '#1e293b', flex: 1 },
+  langNameActive: { color: '#3b82f6' },
+  langNameEn: { fontSize: 14, color: '#64748b' },
 });
+
 
 // Help Screen
 const HelpScreen = () => {
+  const { t } = useLanguage();
   const [expandedFaq, setExpandedFaq] = useState(null);
   const faqs = [
-    { q: 'How do I request access to a task?', a: 'Go to the Available tab, select a task, and tap "Request Access" with a brief reason.' },
-    { q: 'How do I update my progress?', a: 'Open an assigned task and use the "Add Update" field to share your progress.' },
-    { q: 'How do I mark a task as complete?', a: 'After starting work on a task, the "Complete" button will become active. Tap it to mark the task done.' },
+    { q: t('worker.faq1Q'), a: t('worker.faq1A') },
+    { q: t('worker.faq2Q'), a: t('worker.faq2A') },
+    { q: t('worker.faq3Q'), a: t('worker.faq3A') },
   ];
 
   return (
     <ScrollView style={helpStyles.container}>
       <View style={helpStyles.contactCard}>
         <Ionicons name="headset" size={40} color="#3b82f6" />
-        <Text style={helpStyles.contactTitle}>Need Help?</Text>
-        <Text style={helpStyles.contactDesc}>Our support team is here to assist you</Text>
+        <Text style={helpStyles.contactTitle}>{t('help.needHelp')}</Text>
+        <Text style={helpStyles.contactDesc}>{t('help.supportTeam')}</Text>
         <View style={helpStyles.contactButtons}>
           <TouchableOpacity style={helpStyles.contactBtn} onPress={() => Linking.openURL('mailto:support@janpath.com')}>
             <Ionicons name="mail" size={20} color="#fff" />
-            <Text style={helpStyles.contactBtnText}>Email Us</Text>
+            <Text style={helpStyles.contactBtnText}>{t('help.emailUs')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[helpStyles.contactBtn, { backgroundColor: '#22c55e' }]} onPress={() => Linking.openURL('tel:+911234567890')}>
             <Ionicons name="call" size={20} color="#fff" />
-            <Text style={helpStyles.contactBtnText}>Call Us</Text>
+            <Text style={helpStyles.contactBtnText}>{t('help.callUs')}</Text>
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={helpStyles.sectionTitle}>Frequently Asked Questions</Text>
+      <Text style={helpStyles.sectionTitle}>{t('help.faq')}</Text>
       {faqs.map((faq, idx) => (
         <TouchableOpacity key={idx} style={helpStyles.faqItem} onPress={() => setExpandedFaq(expandedFaq === idx ? null : idx)}>
           <View style={helpStyles.faqHeader}>
@@ -646,6 +700,7 @@ const helpStyles = StyleSheet.create({
 
 // Main Worker Navigation
 const WorkerNavigation = ({ currentUser }) => {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('Home');
@@ -708,11 +763,11 @@ const WorkerNavigation = ({ currentUser }) => {
   const isOverlayOpen = showProfile || showSettings || showHelp || selectedGrievance;
 
   const getHeaderTitle = () => {
-    if (selectedGrievance) return 'Task Details';
-    if (showProfile) return 'My Profile';
-    if (showSettings) return 'Settings';
-    if (showHelp) return 'Help & Support';
-    return 'Worker Dashboard';
+    if (selectedGrievance) return t('worker.taskDetails');
+    if (showProfile) return t('profile.title');
+    if (showSettings) return t('settings.title');
+    if (showHelp) return t('help.title');
+    return t('worker.dashboardTitle');
   };
 
   const handleSelectGrievance = (grievance, mode) => {
@@ -727,7 +782,7 @@ const WorkerNavigation = ({ currentUser }) => {
     if (showProfile) return <ProfileScreen currentUser={currentUser} />;
     if (showSettings) return <SettingsScreen />;
     if (showHelp) return <HelpScreen />;
-    
+
     switch (activeTab) {
       case 'Home': return <WorkerDashboard currentUser={currentUser} assignedGrievances={assignedGrievances} onNavigate={setActiveTab} />;
       case 'Assigned': return <AssignedTab grievances={assignedGrievances} onSelectGrievance={handleSelectGrievance} />;
@@ -749,7 +804,9 @@ const WorkerNavigation = ({ currentUser }) => {
             <Ionicons name="menu" size={26} color="#1e293b" />
           </TouchableOpacity>
         )}
-        <Text style={styles.headerTitle}>{getHeaderTitle()}</Text>
+        {/* Tab Bar labels - in renderContent loop or similar? No, it's manually mapped at the end */}
+        {/* Wait, the tabs are mapped at the end of WorkerNavigation similar to UserNavigation? */}
+        {/* I need to check the end of the file. */}
         {isOverlayOpen ? (
           <View style={{ width: 40 }} />
         ) : (
@@ -768,7 +825,11 @@ const WorkerNavigation = ({ currentUser }) => {
             return (
               <TouchableOpacity key={tab.key} style={styles.tabItem} onPress={() => setActiveTab(tab.key)}>
                 <Ionicons name={isActive ? tab.icon : tab.iconOutline} size={24} color={isActive ? '#3b82f6' : '#94a3b8'} />
-                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.key}</Text>
+                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                  {tab.key === 'Home' ? t('nav.home') :
+                    tab.key === 'Assigned' ? t('worker.assigned') :
+                      tab.key === 'Available' ? t('worker.available') : t('worker.requests')}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -781,7 +842,7 @@ const WorkerNavigation = ({ currentUser }) => {
             <View style={styles.menuHeader}>
               <View style={styles.menuLogo}><Ionicons name="construct" size={28} color="#fff" /></View>
               <View style={styles.menuHeaderText}>
-                <Text style={styles.menuTitle}>JanPath Worker</Text>
+                <Text style={styles.menuTitle}>{t('worker.dashboardTitle')}</Text>
                 <Text style={styles.menuSubtitle}>{profile?.email || currentUser?.email}</Text>
               </View>
               <TouchableOpacity onPress={() => setShowMenu(false)} style={styles.closeBtn}>
@@ -791,23 +852,23 @@ const WorkerNavigation = ({ currentUser }) => {
             <ScrollView style={styles.menuItems}>
               <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); closeAllOverlays(); setShowProfile(true); }}>
                 <Ionicons name="person-circle-outline" size={22} color="#475569" />
-                <Text style={styles.menuItemText}>View Profile</Text>
+                <Text style={styles.menuItemText}>{t('profile.viewProfile')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); closeAllOverlays(); setShowSettings(true); }}>
                 <Ionicons name="settings-outline" size={22} color="#475569" />
-                <Text style={styles.menuItemText}>Settings</Text>
+                <Text style={styles.menuItemText}>{t('settings.title')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); closeAllOverlays(); setShowHelp(true); }}>
                 <Ionicons name="help-circle-outline" size={22} color="#475569" />
-                <Text style={styles.menuItemText}>Help & Support</Text>
+                <Text style={styles.menuItemText}>{t('help.title')}</Text>
               </TouchableOpacity>
               <View style={styles.menuDivider} />
               <TouchableOpacity style={styles.signOutBtn} onPress={() => signOut(auth)}>
                 <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-                <Text style={styles.signOutText}>Sign Out</Text>
+                <Text style={styles.signOutText}>{t('auth.signOut')}</Text>
               </TouchableOpacity>
             </ScrollView>
-            <Text style={styles.versionText}>Version 1.0.0</Text>
+            <Text style={styles.versionText}>{t('settings.version')} 1.0.0</Text>
           </View>
         </View>
       </Modal>

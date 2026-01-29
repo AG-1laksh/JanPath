@@ -7,26 +7,29 @@ import * as Location from 'expo-location';
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy, addDoc, deleteDoc, serverTimestamp, writeBatch, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import ProfileScreen from './ProfileScreen';
+import { useLanguage, LANGUAGES } from '../i18n';
+
 
 const PRIORITIES = ['Low', 'Medium', 'High'];
 const CATEGORIES = ['Road', 'Water', 'Electricity', 'Sanitation', 'Other'];
 
 // Dashboard Tab
 const UserDashboard = ({ grievances, onNavigate, onSelectGrievance }) => {
+  const { t } = useLanguage();
   const pendingGrievances = grievances.filter(g => g.status !== 'Resolved' && g.status !== 'Closed');
   const resolvedGrievances = grievances.filter(g => g.status === 'Resolved' || g.status === 'Closed');
 
   const stats = [
-    { title: 'Active', value: pendingGrievances.length, icon: 'time', color: '#f59e0b', bgColor: '#fef3c7' },
-    { title: 'Resolved', value: resolvedGrievances.length, icon: 'checkmark-circle', color: '#22c55e', bgColor: '#f0fdf4' },
-    { title: 'Total', value: grievances.length, icon: 'document-text', color: '#3b82f6', bgColor: '#eff6ff' },
+    { title: t('dashboard.active'), value: pendingGrievances.length, icon: 'time', color: '#f59e0b', bgColor: '#fef3c7' },
+    { title: t('dashboard.resolved'), value: resolvedGrievances.length, icon: 'checkmark-circle', color: '#22c55e', bgColor: '#f0fdf4' },
+    { title: t('dashboard.total'), value: grievances.length, icon: 'document-text', color: '#3b82f6', bgColor: '#eff6ff' },
   ];
 
   return (
     <ScrollView style={dashStyles.container} contentContainerStyle={dashStyles.content}>
       <View style={dashStyles.welcome}>
-        <Text style={dashStyles.welcomeText}>Welcome back,</Text>
-        <Text style={dashStyles.welcomeName}>Citizen</Text>
+        <Text style={dashStyles.welcomeText}>{t('dashboard.welcomeBack')}</Text>
+        <Text style={dashStyles.welcomeName}>{t('dashboard.citizen')}</Text>
       </View>
 
       <View style={dashStyles.statsRow}>
@@ -46,8 +49,8 @@ const UserDashboard = ({ grievances, onNavigate, onSelectGrievance }) => {
           <Ionicons name="add-circle" size={32} color="#3b82f6" />
         </View>
         <View style={dashStyles.createText}>
-          <Text style={dashStyles.createTitle}>Report a Problem</Text>
-          <Text style={dashStyles.createDesc}>Submit a new grievance to local authorities</Text>
+          <Text style={dashStyles.createTitle}>{t('dashboard.reportProblem')}</Text>
+          <Text style={dashStyles.createDesc}>{t('dashboard.submitNewGrievance')}</Text>
         </View>
         <Ionicons name="chevron-forward" size={24} color="#94a3b8" />
       </TouchableOpacity>
@@ -55,9 +58,9 @@ const UserDashboard = ({ grievances, onNavigate, onSelectGrievance }) => {
       {pendingGrievances.length > 0 && (
         <View style={dashStyles.section}>
           <View style={dashStyles.sectionHeader}>
-            <Text style={dashStyles.sectionTitle}>Recent Complaints</Text>
+            <Text style={dashStyles.sectionTitle}>{t('dashboard.recentComplaints')}</Text>
             <TouchableOpacity onPress={() => onNavigate?.('My Complaints')}>
-              <Text style={dashStyles.viewAll}>View All</Text>
+              <Text style={dashStyles.viewAll}>{t('common.viewAll')}</Text>
             </TouchableOpacity>
           </View>
           {pendingGrievances.slice(0, 3).map((item) => (
@@ -111,6 +114,7 @@ const dashStyles = StyleSheet.create({
 
 // Create Grievance Tab
 const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ title: '', description: '', category: '', priority: 'Medium' });
   const [imageBase64, setImageBase64] = useState('');
   const [location, setLocation] = useState(null);
@@ -125,7 +129,7 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
         permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       }
       if (!permission.granted) {
-        Alert.alert('Permission needed', 'Please allow access to photos.');
+        Alert.alert(t('messages.permissionNeeded'), t('messages.photoPermission'));
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({ base64: true, quality: 0.6 });
@@ -133,7 +137,7 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
         setImageBase64(result.assets[0].base64 || '');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image.');
+      Alert.alert(t('common.error'), t('messages.imagePickError'));
     }
   };
 
@@ -141,7 +145,7 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow location access.');
+        Alert.alert(t('messages.permissionNeeded'), t('messages.locationPermission'));
         return;
       }
       const current = await Location.getCurrentPositionAsync({});
@@ -152,7 +156,7 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
       const address = place ? [place.name, place.street, place.city, place.region].filter(Boolean).join(', ') : '';
       setLocation({ latitude: current.coords.latitude, longitude: current.coords.longitude, address });
     } catch (error) {
-      Alert.alert('Error', 'Failed to get location.');
+      Alert.alert(t('common.error'), t('messages.locationError'));
     }
   };
 
@@ -189,10 +193,10 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
       setForm({ title: '', description: '', category: '', priority: 'Medium' });
       setImageBase64('');
       setLocation(null);
-      Alert.alert('Success', 'Your grievance has been submitted.');
+      Alert.alert(t('common.success'), t('messages.submitted'));
       onSuccess?.();
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to submit.');
+      Alert.alert(t('common.error'), error.message || t('messages.submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -201,24 +205,24 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
   return (
     <ScrollView style={createStyles.container} contentContainerStyle={createStyles.content}>
       <View style={createStyles.card}>
-        <Text style={createStyles.label}>Title *</Text>
+        <Text style={createStyles.label}>{t('create.title')} *</Text>
         <TextInput
           style={createStyles.input}
-          placeholder="Brief title of the issue"
+          placeholder={t('create.titlePlaceholder')}
           value={form.title}
           onChangeText={(v) => setForm(p => ({ ...p, title: v }))}
         />
 
-        <Text style={createStyles.label}>Description *</Text>
+        <Text style={createStyles.label}>{t('create.description')} *</Text>
         <TextInput
           style={[createStyles.input, createStyles.textArea]}
-          placeholder="Describe the issue in detail..."
+          placeholder={t('create.descriptionPlaceholder')}
           multiline
           value={form.description}
           onChangeText={(v) => setForm(p => ({ ...p, description: v }))}
         />
 
-        <Text style={createStyles.label}>Category *</Text>
+        <Text style={createStyles.label}>{t('create.category')} *</Text>
         <View style={createStyles.categoryRow}>
           {CATEGORIES.map((cat) => (
             <TouchableOpacity
@@ -226,12 +230,12 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
               style={[createStyles.categoryChip, form.category === cat && createStyles.categoryChipActive]}
               onPress={() => setForm(p => ({ ...p, category: cat }))}
             >
-              <Text style={[createStyles.categoryText, form.category === cat && createStyles.categoryTextActive]}>{cat}</Text>
+              <Text style={[createStyles.categoryText, form.category === cat && createStyles.categoryTextActive]}>{t('categories.' + cat.toLowerCase())}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={createStyles.label}>Priority</Text>
+        <Text style={createStyles.label}>{t('create.priority')}</Text>
         <View style={createStyles.priorityRow}>
           {PRIORITIES.map((p) => (
             <TouchableOpacity
@@ -239,22 +243,22 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
               style={[createStyles.priorityBtn, form.priority === p && createStyles.priorityBtnActive, { backgroundColor: form.priority === p ? (p === 'High' ? '#ef4444' : p === 'Medium' ? '#f59e0b' : '#22c55e') : '#f8fafc' }]}
               onPress={() => setForm(pr => ({ ...pr, priority: p }))}
             >
-              <Text style={[createStyles.priorityText, form.priority === p && createStyles.priorityTextActive]}>{p}</Text>
+              <Text style={[createStyles.priorityText, form.priority === p && createStyles.priorityTextActive]}>{t('priorities.' + p.toLowerCase())}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
       <View style={createStyles.card}>
-        <Text style={createStyles.label}>Attachments</Text>
+        <Text style={createStyles.label}>{t('create.attachments')}</Text>
         <View style={createStyles.attachRow}>
           <TouchableOpacity style={createStyles.attachBtn} onPress={pickImage}>
             <Ionicons name="image" size={24} color="#3b82f6" />
-            <Text style={createStyles.attachText}>Add Photo</Text>
+            <Text style={createStyles.attachText}>{t('create.addPhoto')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={createStyles.attachBtn} onPress={getLocation}>
             <Ionicons name="location" size={24} color="#3b82f6" />
-            <Text style={createStyles.attachText}>Add Location</Text>
+            <Text style={createStyles.attachText}>{t('create.addLocation')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -284,7 +288,7 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
         disabled={!canSubmit || submitting}
       >
         <Ionicons name="send" size={20} color="#fff" />
-        <Text style={createStyles.submitText}>{submitting ? 'Submitting...' : 'Submit Grievance'}</Text>
+        <Text style={createStyles.submitText}>{submitting ? t('create.submitting') : t('create.submitGrievance')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -322,6 +326,7 @@ const createStyles = StyleSheet.create({
 
 // My Complaints Tab
 const MyComplaintsTab = ({ grievances, onSelectGrievance, onDelete }) => {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState('all');
 
   const filteredGrievances = filter === 'all' ? grievances :
@@ -347,7 +352,7 @@ const MyComplaintsTab = ({ grievances, onSelectGrievance, onDelete }) => {
             onPress={() => setFilter(f)}
           >
             <Text style={[complaintsStyles.filterText, filter === f && complaintsStyles.filterTextActive]}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === 'all' ? t('common.all') : f === 'active' ? t('dashboard.active') : t('dashboard.resolved')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -356,8 +361,8 @@ const MyComplaintsTab = ({ grievances, onSelectGrievance, onDelete }) => {
       {filteredGrievances.length === 0 ? (
         <View style={complaintsStyles.empty}>
           <Ionicons name="document-text-outline" size={48} color="#cbd5e1" />
-          <Text style={complaintsStyles.emptyText}>No complaints found</Text>
-          <Text style={complaintsStyles.emptySubtext}>Your submitted complaints will appear here</Text>
+          <Text style={complaintsStyles.emptyText}>{t('complaints.noComplaints')}</Text>
+          <Text style={complaintsStyles.emptySubtext}>{t('complaints.complaintsAppearHere')}</Text>
         </View>
       ) : (
         <FlatList
@@ -374,9 +379,9 @@ const MyComplaintsTab = ({ grievances, onSelectGrievance, onDelete }) => {
                     <Text style={complaintsStyles.cardMeta}>{item.category} • {item.priority} Priority</Text>
                   </View>
                   <TouchableOpacity onPress={() => {
-                    Alert.alert('Delete', 'Are you sure you want to delete this complaint?', [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Delete', style: 'destructive', onPress: () => onDelete(item.id) },
+                    Alert.alert(t('common.delete'), t('complaints.deleteConfirm'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      { text: t('common.delete'), style: 'destructive', onPress: () => onDelete(item.id) },
                     ]);
                   }}>
                     <Ionicons name="trash-outline" size={20} color="#ef4444" />
@@ -417,6 +422,7 @@ const complaintsStyles = StyleSheet.create({
 
 // Community Tab - Public complaints with voting and sharing
 const CommunityTab = ({ currentUser, onSelectGrievance }) => {
+  const { t } = useLanguage();
   const [allGrievances, setAllGrievances] = useState([]);
   const [sortBy, setSortBy] = useState('recent');
   const [loading, setLoading] = useState(true);
@@ -479,7 +485,7 @@ const CommunityTab = ({ currentUser, onSelectGrievance }) => {
       }
     } catch (error) {
       console.error('Vote error:', error);
-      Alert.alert('Error', 'Failed to register vote. Please try again.');
+      Alert.alert(t('common.error'), t('messages.voteError'));
     }
   };
 
@@ -491,7 +497,7 @@ const CommunityTab = ({ currentUser, onSelectGrievance }) => {
     try {
       await Share.share({ message, title: grievance.title });
     } catch (error) {
-      Alert.alert('Error', 'Failed to share complaint.');
+      Alert.alert(t('common.error'), t('messages.shareError'));
     }
   };
 
@@ -507,7 +513,7 @@ const CommunityTab = ({ currentUser, onSelectGrievance }) => {
   if (loading) {
     return (
       <View style={communityStyles.emptyContainer}>
-        <Text style={communityStyles.loadingText}>Loading complaints...</Text>
+        <Text style={communityStyles.loadingText}>{t('community.loading')}</Text>
       </View>
     );
   }
@@ -515,28 +521,28 @@ const CommunityTab = ({ currentUser, onSelectGrievance }) => {
   return (
     <View style={communityStyles.container}>
       <View style={communityStyles.sortRow}>
-        <Text style={communityStyles.sortLabel}>Sort by:</Text>
+        <Text style={communityStyles.sortLabel}>{t('community.sortBy')}</Text>
         <TouchableOpacity
           style={[communityStyles.sortBtn, sortBy === 'recent' && communityStyles.sortBtnActive]}
           onPress={() => setSortBy('recent')}
         >
           <Ionicons name="time-outline" size={16} color={sortBy === 'recent' ? '#fff' : '#64748b'} />
-          <Text style={[communityStyles.sortText, sortBy === 'recent' && communityStyles.sortTextActive]}>Recent</Text>
+          <Text style={[communityStyles.sortText, sortBy === 'recent' && communityStyles.sortTextActive]}>{t('community.recent')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[communityStyles.sortBtn, sortBy === 'upvotes' && communityStyles.sortBtnActive]}
           onPress={() => setSortBy('upvotes')}
         >
           <Ionicons name="trending-up-outline" size={16} color={sortBy === 'upvotes' ? '#fff' : '#64748b'} />
-          <Text style={[communityStyles.sortText, sortBy === 'upvotes' && communityStyles.sortTextActive]}>Top Voted</Text>
+          <Text style={[communityStyles.sortText, sortBy === 'upvotes' && communityStyles.sortTextActive]}>{t('community.topVoted')}</Text>
         </TouchableOpacity>
       </View>
 
       {sortedGrievances.length === 0 ? (
         <View style={communityStyles.emptyContainer}>
           <Ionicons name="people-outline" size={48} color="#cbd5e1" />
-          <Text style={communityStyles.emptyText}>No complaints yet</Text>
-          <Text style={communityStyles.emptySubtext}>Be the first to report an issue!</Text>
+          <Text style={communityStyles.emptyText}>{t('community.noComplaints')}</Text>
+          <Text style={communityStyles.emptySubtext}>{t('community.beFirst')}</Text>
         </View>
       ) : (
         <FlatList
@@ -584,7 +590,7 @@ const CommunityTab = ({ currentUser, onSelectGrievance }) => {
 
                   <TouchableOpacity style={communityStyles.shareBtn} onPress={() => handleShare(item)}>
                     <Ionicons name="share-social-outline" size={18} color="#3b82f6" />
-                    <Text style={communityStyles.shareText}>Share</Text>
+                    <Text style={communityStyles.shareText}>{t('community.share')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -625,6 +631,7 @@ const communityStyles = StyleSheet.create({
 
 // Grievance Detail Screen
 const GrievanceDetailScreen = ({ grievance, onBack }) => {
+  const { t } = useLanguage();
   const [timeline, setTimeline] = useState([]);
   const [activeTab, setActiveTab] = useState('details');
 
@@ -663,39 +670,39 @@ const GrievanceDetailScreen = ({ grievance, onBack }) => {
         <Text style={detailStyles.title}>{grievance?.title}</Text>
         <View style={detailStyles.metaRow}>
           <View style={[detailStyles.badge, { backgroundColor: '#eff6ff' }]}>
-            <Text style={[detailStyles.badgeText, { color: '#3b82f6' }]}>{grievance?.category}</Text>
+            <Text style={[detailStyles.badgeText, { color: '#3b82f6' }]}>{grievance?.category && t('categories.' + grievance.category.toLowerCase())}</Text>
           </View>
           <View style={[detailStyles.badge, { backgroundColor: grievance?.priority === 'High' ? '#fef2f2' : grievance?.priority === 'Medium' ? '#fef3c7' : '#f0fdf4' }]}>
             <Text style={[detailStyles.badgeText, { color: grievance?.priority === 'High' ? '#ef4444' : grievance?.priority === 'Medium' ? '#f59e0b' : '#22c55e' }]}>
-              {grievance?.priority} Priority
+              {grievance?.priority && t('priorities.' + grievance.priority.toLowerCase())} {t('create.priority')}
             </Text>
           </View>
         </View>
         <View style={[detailStyles.statusCard, { backgroundColor: colors.bg }]}>
           <Ionicons name={grievance?.status === 'In Progress' ? 'time' : grievance?.status === 'Resolved' ? 'checkmark-circle' : 'document-text'} size={24} color={colors.text} />
-          <Text style={[detailStyles.statusText, { color: colors.text }]}>{grievance?.status}</Text>
+          <Text style={[detailStyles.statusText, { color: colors.text }]}>{grievance?.status === 'In Progress' ? t('common.inProgress') : grievance?.status && t('common.' + grievance.status.toLowerCase())}</Text>
         </View>
       </View>
 
       <View style={detailStyles.tabRow}>
         <TouchableOpacity style={[detailStyles.tabBtn, activeTab === 'details' && detailStyles.tabBtnActive]} onPress={() => setActiveTab('details')}>
-          <Text style={[detailStyles.tabText, activeTab === 'details' && detailStyles.tabTextActive]}>Details</Text>
+          <Text style={[detailStyles.tabText, activeTab === 'details' && detailStyles.tabTextActive]}>{t('complaints.details')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[detailStyles.tabBtn, activeTab === 'updates' && detailStyles.tabBtnActive]} onPress={() => setActiveTab('updates')}>
-          <Text style={[detailStyles.tabText, activeTab === 'updates' && detailStyles.tabTextActive]}>Updates ({timeline.length})</Text>
+          <Text style={[detailStyles.tabText, activeTab === 'updates' && detailStyles.tabTextActive]}>{t('complaints.updates')} ({timeline.length})</Text>
         </TouchableOpacity>
       </View>
 
       {activeTab === 'details' ? (
         <>
           <View style={detailStyles.card}>
-            <Text style={detailStyles.sectionTitle}>Description</Text>
+            <Text style={detailStyles.sectionTitle}>{t('create.description')}</Text>
             <Text style={detailStyles.description}>{grievance?.description}</Text>
           </View>
 
           {grievance?.location && (
             <View style={detailStyles.card}>
-              <Text style={detailStyles.sectionTitle}>Location</Text>
+              <Text style={detailStyles.sectionTitle}>{t('complaints.location')}</Text>
               <View style={detailStyles.locationRow}>
                 <Ionicons name="location" size={20} color="#3b82f6" />
                 <Text style={detailStyles.locationText}>
@@ -707,16 +714,16 @@ const GrievanceDetailScreen = ({ grievance, onBack }) => {
 
           {grievance?.imageBase64 && (
             <View style={detailStyles.card}>
-              <Text style={detailStyles.sectionTitle}>Attached Image</Text>
+              <Text style={detailStyles.sectionTitle}>{t('complaints.attachedImage')}</Text>
               <Image source={{ uri: `data:image/jpeg;base64,${grievance.imageBase64}` }} style={detailStyles.image} />
             </View>
           )}
         </>
       ) : (
         <View style={detailStyles.card}>
-          <Text style={detailStyles.sectionTitle}>Status Timeline</Text>
+          <Text style={detailStyles.sectionTitle}>{t('complaints.statusTimeline')}</Text>
           {timeline.length === 0 ? (
-            <Text style={detailStyles.emptyTimeline}>No updates yet</Text>
+            <Text style={detailStyles.emptyTimeline}>{t('complaints.noUpdates')}</Text>
           ) : (
             timeline.map((log, idx) => (
               <View key={log.id} style={[detailStyles.timelineItem, idx < timeline.length - 1 && detailStyles.timelineItemBorder]}>
@@ -770,36 +777,78 @@ const detailStyles = StyleSheet.create({
 
 // Settings Screen
 const SettingsScreen = () => {
+  const { language, changeLanguage, t } = useLanguage();
   const [pushNotifications, setPushNotifications] = useState(true);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+
+  const currentLang = LANGUAGES.find(l => l.code === language);
 
   return (
     <ScrollView style={settingsStyles.container}>
       <View style={settingsStyles.section}>
-        <Text style={settingsStyles.sectionTitle}>Notifications</Text>
+        <Text style={settingsStyles.sectionTitle}>{t('settings.notifications')}</Text>
         <View style={settingsStyles.sectionContent}>
           <View style={settingsStyles.item}>
             <View style={settingsStyles.itemIcon}><Ionicons name="notifications" size={20} color="#3b82f6" /></View>
-            <Text style={settingsStyles.itemLabel}>Push Notifications</Text>
+            <Text style={settingsStyles.itemLabel}>{t('settings.pushNotifications')}</Text>
             <Switch value={pushNotifications} onValueChange={setPushNotifications} trackColor={{ false: '#e2e8f0', true: '#bfdbfe' }} thumbColor={pushNotifications ? '#3b82f6' : '#94a3b8'} />
           </View>
         </View>
       </View>
+
       <View style={settingsStyles.section}>
-        <Text style={settingsStyles.sectionTitle}>Account</Text>
+        <Text style={settingsStyles.sectionTitle}>{t('settings.language')}</Text>
         <View style={settingsStyles.sectionContent}>
-          <TouchableOpacity style={settingsStyles.item}>
-            <View style={settingsStyles.itemIcon}><Ionicons name="lock-closed" size={20} color="#3b82f6" /></View>
-            <Text style={settingsStyles.itemLabel}>Change Password</Text>
-            <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-          </TouchableOpacity>
-          <TouchableOpacity style={[settingsStyles.item, { borderBottomWidth: 0 }]}>
-            <View style={settingsStyles.itemIcon}><Ionicons name="shield-checkmark" size={20} color="#3b82f6" /></View>
-            <Text style={settingsStyles.itemLabel}>Privacy Policy</Text>
+          <TouchableOpacity style={[settingsStyles.item, { borderBottomWidth: 0 }]} onPress={() => setShowLanguageModal(true)}>
+            <View style={settingsStyles.itemIcon}><Ionicons name="language" size={20} color="#3b82f6" /></View>
+            <Text style={settingsStyles.itemLabel}>{currentLang?.nativeName || 'English'}</Text>
             <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={settingsStyles.version}>Version 1.0.0</Text>
+
+      <View style={settingsStyles.section}>
+        <Text style={settingsStyles.sectionTitle}>{t('settings.account')}</Text>
+        <View style={settingsStyles.sectionContent}>
+          <TouchableOpacity style={settingsStyles.item}>
+            <View style={settingsStyles.itemIcon}><Ionicons name="lock-closed" size={20} color="#3b82f6" /></View>
+            <Text style={settingsStyles.itemLabel}>{t('settings.changePassword')}</Text>
+            <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+          </TouchableOpacity>
+          <TouchableOpacity style={[settingsStyles.item, { borderBottomWidth: 0 }]}>
+            <View style={settingsStyles.itemIcon}><Ionicons name="shield-checkmark" size={20} color="#3b82f6" /></View>
+            <Text style={settingsStyles.itemLabel}>{t('settings.privacyPolicy')}</Text>
+            <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={settingsStyles.version}>{t('settings.version')} 1.0.0</Text>
+
+      <Modal visible={showLanguageModal} animationType="slide" transparent>
+        <View style={settingsStyles.modalOverlay}>
+          <View style={settingsStyles.modalContent}>
+            <View style={settingsStyles.modalHeader}>
+              <Text style={settingsStyles.modalTitle}>{t('settings.selectLanguage')}</Text>
+              <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {LANGUAGES.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[settingsStyles.langItem, language === lang.code && settingsStyles.langItemActive]}
+                  onPress={() => { changeLanguage(lang.code); setShowLanguageModal(false); }}
+                >
+                  <Text style={[settingsStyles.langName, language === lang.code && settingsStyles.langNameActive]}>{lang.nativeName}</Text>
+                  <Text style={settingsStyles.langNameEn}>{lang.name}</Text>
+                  {language === lang.code && <Ionicons name="checkmark-circle" size={22} color="#3b82f6" />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -813,35 +862,46 @@ const settingsStyles = StyleSheet.create({
   itemIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
   itemLabel: { flex: 1, fontSize: 15, color: '#1e293b', fontWeight: '500' },
   version: { textAlign: 'center', color: '#94a3b8', fontSize: 12, marginTop: 20 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '70%', paddingBottom: 40 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b' },
+  langItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', gap: 12 },
+  langItemActive: { backgroundColor: '#eff6ff' },
+  langName: { fontSize: 16, fontWeight: '600', color: '#1e293b', flex: 1 },
+  langNameActive: { color: '#3b82f6' },
+  langNameEn: { fontSize: 14, color: '#64748b' },
 });
+
 
 // Help Screen
 const HelpScreen = () => {
+  const { t } = useLanguage();
   const [expandedFaq, setExpandedFaq] = useState(null);
   const faqs = [
-    { q: 'How do I submit a grievance?', a: 'Go to the Create tab, fill in the details of your issue, add photos and location if needed, then tap Submit.' },
-    { q: 'How can I track my complaint status?', a: 'Go to My Complaints tab, tap on any complaint to see its current status and timeline of updates.' },
-    { q: 'How long does it take to resolve a complaint?', a: 'Resolution time depends on the nature and complexity of the issue. You will receive updates as work progresses.' },
+    { q: t('help.faq1Q'), a: t('help.faq1A') },
+    { q: t('help.faq2Q'), a: t('help.faq2A') },
+    { q: t('help.faq3Q'), a: t('help.faq3A') },
   ];
 
   return (
     <ScrollView style={helpStyles.container}>
       <View style={helpStyles.contactCard}>
         <Ionicons name="headset" size={40} color="#3b82f6" />
-        <Text style={helpStyles.contactTitle}>Need Help?</Text>
-        <Text style={helpStyles.contactDesc}>Our support team is here to assist you</Text>
+        <Text style={helpStyles.contactTitle}>{t('help.needHelp')}</Text>
+        <Text style={helpStyles.contactDesc}>{t('help.supportDesc')}</Text>
         <View style={helpStyles.contactButtons}>
           <TouchableOpacity style={helpStyles.contactBtn} onPress={() => Linking.openURL('mailto:support@janpath.com')}>
             <Ionicons name="mail" size={20} color="#fff" />
-            <Text style={helpStyles.contactBtnText}>Email Us</Text>
+            <Text style={helpStyles.contactBtnText}>{t('help.emailUs')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[helpStyles.contactBtn, { backgroundColor: '#22c55e' }]} onPress={() => Linking.openURL('tel:+911234567890')}>
             <Ionicons name="call" size={20} color="#fff" />
-            <Text style={helpStyles.contactBtnText}>Call Us</Text>
+            <Text style={helpStyles.contactBtnText}>{t('help.callUs')}</Text>
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={helpStyles.sectionTitle}>Frequently Asked Questions</Text>
+      <Text style={helpStyles.sectionTitle}>{t('help.faq')}</Text>
       {faqs.map((faq, idx) => (
         <TouchableOpacity key={idx} style={helpStyles.faqItem} onPress={() => setExpandedFaq(expandedFaq === idx ? null : idx)}>
           <View style={helpStyles.faqHeader}>
@@ -872,6 +932,7 @@ const helpStyles = StyleSheet.create({
 
 // Main User Navigation
 const UserNavigation = ({ currentUser }) => {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('Home');
@@ -930,13 +991,13 @@ const UserNavigation = ({ currentUser }) => {
   const isOverlayOpen = showProfile || showSettings || showHelp || selectedGrievance;
 
   const getHeaderTitle = () => {
-    if (selectedGrievance) return 'Complaint Details';
-    if (showProfile) return 'My Profile';
-    if (showSettings) return 'Settings';
-    if (showHelp) return 'Help & Support';
-    if (activeTab === 'Community') return 'Community';
-    if (activeTab === 'Create') return 'Report Problem';
-    if (activeTab === 'My Complaints') return 'My Complaints';
+    if (selectedGrievance) return t('complaints.details');
+    if (showProfile) return t('profile.title');
+    if (showSettings) return t('settings.title');
+    if (showHelp) return t('help.title');
+    if (activeTab === 'Community') return t('community.title');
+    if (activeTab === 'Create') return t('dashboard.reportProblem');
+    if (activeTab === 'My Complaints') return t('complaints.myComplaints');
     return 'JanPath';
   };
 
@@ -986,7 +1047,11 @@ const UserNavigation = ({ currentUser }) => {
             return (
               <TouchableOpacity key={tab.key} style={styles.tabItem} onPress={() => setActiveTab(tab.key)}>
                 <Ionicons name={isActive ? tab.icon : tab.iconOutline} size={24} color={isActive ? '#3b82f6' : '#94a3b8'} />
-                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.key === 'My Complaints' ? 'Complaints' : tab.key}</Text>
+                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                  {tab.key === 'Home' ? t('nav.home') :
+                    tab.key === 'Community' ? t('nav.community') :
+                      tab.key === 'Create' ? t('nav.create') : t('nav.complaints')}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -1009,23 +1074,23 @@ const UserNavigation = ({ currentUser }) => {
             <ScrollView style={styles.menuItems}>
               <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); closeAllOverlays(); setShowProfile(true); }}>
                 <Ionicons name="person-circle-outline" size={22} color="#475569" />
-                <Text style={styles.menuItemText}>View Profile</Text>
+                <Text style={styles.menuItemText}>{t('profile.viewProfile')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); closeAllOverlays(); setShowSettings(true); }}>
                 <Ionicons name="settings-outline" size={22} color="#475569" />
-                <Text style={styles.menuItemText}>Settings</Text>
+                <Text style={styles.menuItemText}>{t('settings.title')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); closeAllOverlays(); setShowHelp(true); }}>
                 <Ionicons name="help-circle-outline" size={22} color="#475569" />
-                <Text style={styles.menuItemText}>Help & Support</Text>
+                <Text style={styles.menuItemText}>{t('help.title')}</Text>
               </TouchableOpacity>
               <View style={styles.menuDivider} />
               <TouchableOpacity style={styles.signOutBtn} onPress={() => signOut(auth)}>
                 <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-                <Text style={styles.signOutText}>Sign Out</Text>
+                <Text style={styles.signOutText}>{t('auth.signOut')}</Text>
               </TouchableOpacity>
             </ScrollView>
-            <Text style={styles.versionText}>Version 1.0.0</Text>
+            <Text style={styles.versionText}>{t('settings.version')} 1.0.0</Text>
           </View>
         </View>
       </Modal>

@@ -8,8 +8,10 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useLanguage } from '../../i18n';
 
 const WorkersTab = () => {
+  const { t } = useLanguage();
   const [registeredWorkers, setRegisteredWorkers] = useState([]);
   const [assignedGrievances, setAssignedGrievances] = useState([]);
   const [workerFilter, setWorkerFilter] = useState('all');
@@ -80,9 +82,9 @@ const WorkersTab = () => {
   };
 
   const filterOptions = [
-    { key: 'all', label: 'All', icon: 'people' },
-    { key: 'available', label: 'Available', icon: 'checkmark-circle' },
-    { key: 'working', label: 'Working', icon: 'time' },
+    { key: 'all', label: t('common.all'), icon: 'people' },
+    { key: 'available', label: t('worker.available'), icon: 'checkmark-circle' },
+    { key: 'working', label: t('admin.working'), icon: 'time' },
   ];
 
   if (selectedWorker) {
@@ -98,7 +100,7 @@ const WorkersTab = () => {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => setSelectedWorker(null)}>
           <Ionicons name="arrow-back" size={24} color="#3b82f6" />
-          <Text style={styles.backButtonText}>Back to Workers</Text>
+          <Text style={styles.backButtonText}>{t('admin.backToWorkers')}</Text>
         </TouchableOpacity>
 
         <View style={styles.profileCard}>
@@ -109,7 +111,7 @@ const WorkersTab = () => {
           <Text style={styles.profileEmail}>{selectedWorker.email}</Text>
           <View style={[styles.statusBadge, selectedWorker.isWorking ? styles.busyBadge : styles.availableBadge]}>
             <Text style={[styles.statusBadgeText, selectedWorker.isWorking ? styles.busyText : styles.availableText]}>
-              {selectedWorker.isWorking ? 'Working' : 'Available'}
+              {selectedWorker.isWorking ? t('admin.working') : t('worker.available')}
             </Text>
           </View>
         </View>
@@ -117,29 +119,29 @@ const WorkersTab = () => {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>{activeGrievances.length}</Text>
-            <Text style={styles.statLabel}>Active</Text>
+            <Text style={styles.statLabel}>{t('common.active')}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>{completedGrievances.length}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
+            <Text style={styles.statLabel}>{t('worker.completed')}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>{workerGrievances.length}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+            <Text style={styles.statLabel}>{t('common.total')}</Text>
           </View>
         </View>
 
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
             <Ionicons name="business-outline" size={18} color="#64748b" />
-            <Text style={styles.infoLabel}>Department</Text>
+            <Text style={styles.infoLabel}>{t('admin.department')}</Text>
             <Text style={styles.infoValue}>{selectedWorker.department || 'N/A'}</Text>
           </View>
         </View>
 
         {activeGrievances.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Active Tasks</Text>
+            <Text style={styles.sectionTitle}>{t('admin.activeTasks')}</Text>
             {activeGrievances.map((grievance) => (
               <View key={grievance.id} style={styles.taskCard}>
                 <View style={styles.taskHeader}>
@@ -161,7 +163,7 @@ const WorkersTab = () => {
 
         {completedGrievances.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Completed Tasks</Text>
+            <Text style={styles.sectionTitle}>{t('admin.completedTasks')}</Text>
             {completedGrievances.map((grievance) => (
               <View key={grievance.id} style={[styles.taskCard, styles.completedTask]}>
                 <View style={styles.taskHeader}>
@@ -186,7 +188,7 @@ const WorkersTab = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Workers</Text>
+        <Text style={styles.headerTitle}>{t('admin.workers')}</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{registeredWorkers.length}</Text>
         </View>
@@ -214,8 +216,8 @@ const WorkersTab = () => {
       {registeredWorkers.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="people-outline" size={64} color="#cbd5e1" />
-          <Text style={styles.emptyText}>No workers registered</Text>
-          <Text style={styles.emptySubtext}>Workers will appear here once approved</Text>
+          <Text style={styles.emptyText}>{t('admin.noWorkers')}</Text>
+          <Text style={styles.emptySubtext}>{t('admin.noWorkersSubtext')}</Text>
         </View>
       ) : (
         <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
@@ -247,7 +249,7 @@ const WorkersTab = () => {
                     <View style={styles.workerStats}>
                       {activeCount > 0 && (
                         <View style={styles.taskBadge}>
-                          <Text style={styles.taskBadgeText}>{activeCount} tasks</Text>
+                          <Text style={styles.taskBadgeText}>{activeCount} {t('admin.tasksLower')}</Text>
                         </View>
                       )}
                       <View style={[styles.statusDot, worker.isWorking ? styles.busyDot : styles.availableDot]} />

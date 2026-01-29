@@ -29,6 +29,7 @@ import { auth, db } from './src/firebase';
 import WorkerNavigation from './src/screens/WorkerNavigation';
 import AdminNavigation from './src/screens/AdminNavigation';
 import UserNavigation from './src/screens/UserNavigation';
+import { LanguageProvider, useLanguage } from './src/i18n';
 
 const WORKER_SKILLS = [
   'Road Repair',
@@ -46,6 +47,7 @@ const WORKER_SKILLS = [
 ];
 
 function AuthScreen() {
+  const { t } = useLanguage();
   const [mode, setMode] = useState('signin');
   const [selectedRole, setSelectedRole] = useState('USER');
   const [name, setName] = useState('');
@@ -63,12 +65,12 @@ function AuthScreen() {
 
   const handleAuth = async () => {
     if (!email || !password) {
-      Alert.alert('Missing fields', 'Email and password are required.');
+      Alert.alert(t('common.error'), t('auth.missingFields'));
       return;
     }
 
     if (mode === 'signup' && !name) {
-      Alert.alert('Missing fields', 'Name is required for sign up.');
+      Alert.alert(t('common.error'), t('auth.nameRequired'));
       return;
     }
 
@@ -108,7 +110,7 @@ function AuthScreen() {
             status: 'Pending',
             requestedAt: serverTimestamp(),
           });
-          Alert.alert('Request sent', 'Admin approval is required before login.');
+          Alert.alert(t('common.requestSent'), t('auth.workerApprovalRequired'));
         }
       } else {
         const userCred = await signInWithEmailAndPassword(auth, email, password);
@@ -116,14 +118,14 @@ function AuthScreen() {
         const actualRole = roleSnap.data()?.role || 'USER';
         if (actualRole === 'WORKER_PENDING') {
           await signOut(auth);
-          Alert.alert('Pending approval', 'Admin approval is required for worker access.');
+          Alert.alert(t('common.status'), t('auth.workerApprovalRequired'));
         } else if (actualRole !== selectedRole) {
           await signOut(auth);
-          Alert.alert('Role mismatch', `Please sign in as ${actualRole}.`);
+          Alert.alert(t('common.error'), t('auth.roleMismatch', { role: actualRole }));
         }
       }
     } catch (error) {
-      Alert.alert('Auth failed', error.message || 'Please try again.');
+      Alert.alert(t('common.error'), error.message || t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -133,7 +135,7 @@ function AuthScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.authContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
-          <Text style={styles.title}>User Login</Text>
+          <Text style={styles.title}>{t('auth.userLogin')}</Text>
           <View style={styles.roleRow}>
             {['USER', 'WORKER', 'ADMIN'].map((role) => (
               <TouchableOpacity
@@ -144,7 +146,7 @@ function AuthScreen() {
                 <Text
                   style={selectedRole === role ? styles.roleTextActive : styles.roleText}
                 >
-                  {role}
+                  {t('roles.' + role.toLowerCase())}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -152,7 +154,7 @@ function AuthScreen() {
           {mode === 'signup' && (
             <TextInput
               style={styles.input}
-              placeholder="Full name"
+              placeholder={t('auth.fullName')}
               value={name}
               onChangeText={setName}
             />
@@ -231,7 +233,7 @@ function AuthScreen() {
           )}
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder={t('auth.email')}
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -245,7 +247,7 @@ function AuthScreen() {
             onChangeText={setPassword}
           />
           <Button
-            title={loading ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}
+            title={loading ? t('common.loading') : mode === 'signup' ? t('auth.createAccount') : t('auth.signIn')}
             onPress={handleAuth}
             disabled={loading}
           />
@@ -254,7 +256,7 @@ function AuthScreen() {
             onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
           >
             <Text style={styles.linkText}>
-              {mode === 'signup' ? 'Already have an account? Sign in' : 'No account? Sign up'}
+              {mode === 'signup' ? t('auth.alreadyHaveAccount') : t('auth.noAccount')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -302,43 +304,53 @@ export default function App() {
 
   if (initializing) {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.container}>
-          <Text style={styles.title}>Loading...</Text>
-        </SafeAreaView>
-      </SafeAreaProvider>
+      <LanguageProvider>
+        <SafeAreaProvider>
+          <SafeAreaView style={styles.container}>
+            <Text style={styles.title}>Loading...</Text>
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </LanguageProvider>
     );
   }
 
   if (!user) {
     return (
-      <SafeAreaProvider>
-        <AuthScreen />
-      </SafeAreaProvider>
+      <LanguageProvider>
+        <SafeAreaProvider>
+          <AuthScreen />
+        </SafeAreaProvider>
+      </LanguageProvider>
     );
   }
 
   if (userRole === 'WORKER') {
     return (
-      <SafeAreaProvider>
-        <WorkerNavigation currentUser={user} />
-      </SafeAreaProvider>
+      <LanguageProvider>
+        <SafeAreaProvider>
+          <WorkerNavigation currentUser={user} />
+        </SafeAreaProvider>
+      </LanguageProvider>
     );
   }
 
   if (userRole === 'ADMIN') {
     return (
-      <SafeAreaProvider>
-        <AdminNavigation currentUser={user} />
-      </SafeAreaProvider>
+      <LanguageProvider>
+        <SafeAreaProvider>
+          <AdminNavigation currentUser={user} />
+        </SafeAreaProvider>
+      </LanguageProvider>
     );
   }
 
   // Regular USER role - use the new UserNavigation
   return (
-    <SafeAreaProvider>
-      <UserNavigation currentUser={user} />
-    </SafeAreaProvider>
+    <LanguageProvider>
+      <SafeAreaProvider>
+        <UserNavigation currentUser={user} />
+      </SafeAreaProvider>
+    </LanguageProvider>
   );
 }
 

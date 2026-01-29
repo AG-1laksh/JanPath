@@ -4,8 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { useLanguage } from '../i18n';
 
 const ProfileScreen = ({ currentUser }) => {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,9 +29,9 @@ const ProfileScreen = ({ currentUser }) => {
   }, [currentUser]);
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: () => signOut(auth) },
+    Alert.alert(t('auth.signOut'), t('auth.signOutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('auth.signOut'), style: 'destructive', onPress: () => signOut(auth) },
     ]);
   };
 
@@ -37,7 +39,7 @@ const ProfileScreen = ({ currentUser }) => {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <Text style={styles.loadingText}>{t('profile.loading')}</Text>
         </View>
       </View>
     );
@@ -61,15 +63,15 @@ const ProfileScreen = ({ currentUser }) => {
 
       {/* Profile Info Cards */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account Information</Text>
-        
+        <Text style={styles.sectionTitle}>{t('profile.accountInfo')}</Text>
+
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
               <Ionicons name="mail-outline" size={20} color="#3b82f6" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoLabel}>{t('auth.email')}</Text>
               <Text style={styles.infoValue}>{profile?.email || currentUser.email}</Text>
             </View>
           </View>
@@ -81,7 +83,7 @@ const ProfileScreen = ({ currentUser }) => {
               <Ionicons name="shield-checkmark-outline" size={20} color="#3b82f6" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Role</Text>
+              <Text style={styles.infoLabel}>{t('profile.role')}</Text>
               <Text style={styles.infoValue}>{profile?.role || 'USER'}</Text>
             </View>
           </View>
@@ -94,7 +96,7 @@ const ProfileScreen = ({ currentUser }) => {
                   <Ionicons name="business-outline" size={20} color="#3b82f6" />
                 </View>
                 <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Department</Text>
+                  <Text style={styles.infoLabel}>{t('profile.department')}</Text>
                   <Text style={styles.infoValue}>{profile.department}</Text>
                 </View>
               </View>
@@ -109,7 +111,7 @@ const ProfileScreen = ({ currentUser }) => {
                   <Ionicons name="calendar-outline" size={20} color="#3b82f6" />
                 </View>
                 <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Member Since</Text>
+                  <Text style={styles.infoLabel}>{t('profile.memberSince')}</Text>
                   <Text style={styles.infoValue}>
                     {profile.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
                   </Text>
@@ -122,12 +124,12 @@ const ProfileScreen = ({ currentUser }) => {
 
       {/* Actions Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Settings</Text>
-        
+        <Text style={styles.sectionTitle}>{t('settings.title')}</Text>
+
         <TouchableOpacity style={styles.menuItem}>
           <View style={styles.menuItemLeft}>
             <Ionicons name="notifications-outline" size={22} color="#64748b" />
-            <Text style={styles.menuItemText}>Notifications</Text>
+            <Text style={styles.menuItemText}>{t('settings.notifications')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
         </TouchableOpacity>
@@ -135,7 +137,7 @@ const ProfileScreen = ({ currentUser }) => {
         <TouchableOpacity style={styles.menuItem}>
           <View style={styles.menuItemLeft}>
             <Ionicons name="lock-closed-outline" size={22} color="#64748b" />
-            <Text style={styles.menuItemText}>Privacy</Text>
+            <Text style={styles.menuItemText}>{t('profile.privacy')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
         </TouchableOpacity>
@@ -143,7 +145,7 @@ const ProfileScreen = ({ currentUser }) => {
         <TouchableOpacity style={styles.menuItem}>
           <View style={styles.menuItemLeft}>
             <Ionicons name="help-circle-outline" size={22} color="#64748b" />
-            <Text style={styles.menuItemText}>Help & Support</Text>
+            <Text style={styles.menuItemText}>{t('help.title')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
         </TouchableOpacity>
@@ -152,7 +154,7 @@ const ProfileScreen = ({ currentUser }) => {
       {/* Sign Out Button */}
       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
         <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-        <Text style={styles.signOutText}>Sign Out</Text>
+        <Text style={styles.signOutText}>{t('auth.signOut')}</Text>
       </TouchableOpacity>
 
       <View style={styles.footer}>

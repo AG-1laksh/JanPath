@@ -11,8 +11,10 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useLanguage } from '../../i18n';
 
 const SignupsTab = ({ currentUser }) => {
+  const { t } = useLanguage();
   const [pendingSignups, setPendingSignups] = useState([]);
   const [selectedSignup, setSelectedSignup] = useState(null);
 
@@ -43,9 +45,9 @@ const SignupsTab = ({ currentUser }) => {
         status: 'Approved',
       });
       setSelectedSignup(null);
-      Alert.alert('Success', 'Worker signup approved successfully.');
+      Alert.alert(t('common.success'), t('admin.signupApproved'));
     } catch (error) {
-      Alert.alert('Error', error?.message || 'Failed to approve signup.');
+      Alert.alert(t('common.error'), error?.message || t('admin.approveError'));
     }
   };
 
@@ -55,9 +57,9 @@ const SignupsTab = ({ currentUser }) => {
         status: 'Rejected',
       });
       setSelectedSignup(null);
-      Alert.alert('Rejected', 'Signup request has been rejected.');
+      Alert.alert(t('admin.reject'), t('admin.signupRejected'));
     } catch (error) {
-      Alert.alert('Error', error?.message || 'Failed to reject signup.');
+      Alert.alert(t('common.error'), error?.message || t('admin.rejectError'));
     }
   };
 
@@ -66,7 +68,7 @@ const SignupsTab = ({ currentUser }) => {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => setSelectedSignup(null)}>
           <Ionicons name="arrow-back" size={24} color="#3b82f6" />
-          <Text style={styles.backButtonText}>Back to Signups</Text>
+          <Text style={styles.backButtonText}>{t('common.back')}</Text>
         </TouchableOpacity>
 
         <View style={styles.profileCard}>
@@ -80,13 +82,13 @@ const SignupsTab = ({ currentUser }) => {
         </View>
 
         <View style={styles.detailCard}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-          
+          <Text style={styles.sectionTitle}>{t('profile.personalInfo')}</Text>
+
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
               <Ionicons name="calendar-outline" size={18} color="#64748b" />
               <View>
-                <Text style={styles.infoLabel}>Date of Birth</Text>
+                <Text style={styles.infoLabel}>{t('profile.dob')}</Text>
                 <Text style={styles.infoValue}>{selectedSignup.dob}</Text>
               </View>
             </View>
@@ -94,7 +96,7 @@ const SignupsTab = ({ currentUser }) => {
             <View style={styles.infoItem}>
               <Ionicons name="call-outline" size={18} color="#64748b" />
               <View>
-                <Text style={styles.infoLabel}>Phone</Text>
+                <Text style={styles.infoLabel}>{t('profile.phoneNumber')}</Text>
                 <Text style={styles.infoValue}>{selectedSignup.phone}</Text>
               </View>
             </View>
@@ -102,7 +104,7 @@ const SignupsTab = ({ currentUser }) => {
             <View style={styles.infoItem}>
               <Ionicons name="card-outline" size={18} color="#64748b" />
               <View>
-                <Text style={styles.infoLabel}>Aadhar</Text>
+                <Text style={styles.infoLabel}>{t('auth.aadhar')}</Text>
                 <Text style={styles.infoValue}>{selectedSignup.aadhar}</Text>
               </View>
             </View>
@@ -110,7 +112,7 @@ const SignupsTab = ({ currentUser }) => {
             <View style={styles.infoItem}>
               <Ionicons name="location-outline" size={18} color="#64748b" />
               <View>
-                <Text style={styles.infoLabel}>City</Text>
+                <Text style={styles.infoLabel}>{t('profile.city')}</Text>
                 <Text style={styles.infoValue}>{selectedSignup.city}</Text>
               </View>
             </View>
@@ -118,12 +120,12 @@ const SignupsTab = ({ currentUser }) => {
         </View>
 
         <View style={styles.detailCard}>
-          <Text style={styles.sectionTitle}>Professional Information</Text>
-          
+          <Text style={styles.sectionTitle}>{t('admin.professionalInfo')}</Text>
+
           <View style={styles.infoItem}>
             <Ionicons name="business-outline" size={18} color="#64748b" />
             <View>
-              <Text style={styles.infoLabel}>Department</Text>
+              <Text style={styles.infoLabel}>{t('admin.department')}</Text>
               <Text style={styles.infoValue}>{selectedSignup.department}</Text>
             </View>
           </View>
@@ -131,14 +133,14 @@ const SignupsTab = ({ currentUser }) => {
           <View style={styles.infoItem}>
             <Ionicons name="time-outline" size={18} color="#64748b" />
             <View>
-              <Text style={styles.infoLabel}>Experience</Text>
+              <Text style={styles.infoLabel}>{t('admin.experience')}</Text>
               <Text style={styles.infoValue}>
-                {selectedSignup.experienceYears || '0'} years, {selectedSignup.experienceMonths || '0'} months
+                {selectedSignup.experienceYears || '0'} {t('common.years')}, {selectedSignup.experienceMonths || '0'} {t('common.months')}
               </Text>
             </View>
           </View>
 
-          <Text style={[styles.infoLabel, { marginTop: 16, marginBottom: 8 }]}>Skills</Text>
+          <Text style={[styles.infoLabel, { marginTop: 16, marginBottom: 8 }]}>{t('admin.skills')}</Text>
           <View style={styles.skillsContainer}>
             {(selectedSignup.skills || []).map((skill, index) => (
               <View key={index} style={styles.skillChip}>
@@ -154,15 +156,15 @@ const SignupsTab = ({ currentUser }) => {
             onPress={() => approveSignup(selectedSignup)}
           >
             <Ionicons name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Approve</Text>
+            <Text style={styles.actionButtonText}>{t('admin.approve')}</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.actionButton, styles.rejectButton]}
             onPress={() => rejectSignup(selectedSignup)}
           >
             <Ionicons name="close-circle" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Reject</Text>
+            <Text style={styles.actionButtonText}>{t('admin.reject')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -172,7 +174,7 @@ const SignupsTab = ({ currentUser }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Worker Signups</Text>
+        <Text style={styles.headerTitle}>{t('admin.workerSignups')}</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{pendingSignups.length}</Text>
         </View>
@@ -181,8 +183,8 @@ const SignupsTab = ({ currentUser }) => {
       {pendingSignups.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="people-outline" size={64} color="#cbd5e1" />
-          <Text style={styles.emptyText}>No pending signups</Text>
-          <Text style={styles.emptySubtext}>New worker signups will appear here</Text>
+          <Text style={styles.emptyText}>{t('admin.noPendingSignups')}</Text>
+          <Text style={styles.emptySubtext}>{t('admin.noPendingSignupsSubtext')}</Text>
         </View>
       ) : (
         <FlatList
@@ -199,7 +201,7 @@ const SignupsTab = ({ currentUser }) => {
                 <Text style={styles.cardMeta}>{item.department} • {item.city}</Text>
                 <View style={styles.experienceTag}>
                   <Text style={styles.experienceText}>
-                    {item.experienceYears || '0'}y {item.experienceMonths || '0'}m exp
+                    {item.experienceYears || '0'}y {item.experienceMonths || '0'}m {t('admin.exp')}
                   </Text>
                 </View>
               </View>
