@@ -48,23 +48,14 @@ export function Sidebar({ items, userType }: SidebarProps) {
             </button>
 
             {/* Sidebar Container */}
-            <motion.aside
-                initial={false}
-                animate={{
-                    x: isOpen ? 0 : -300,
-                    opacity: isOpen ? 1 : 0
-                }}
-                // Reset on desktop
-                variants={{
-                    desktop: { x: 0, opacity: 1 },
-                    mobile: { x: isOpen ? 0 : -300, opacity: isOpen ? 1 : 0 }
-                }}
+            <aside
                 className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-[#0a0a0a] border-r border-white/10 
-          flex flex-col
-          md:relative md:!translate-x-0 md:!opacity-100 md:block
-          ${isOpen ? 'block' : 'hidden'}
-        `}
+                    fixed inset-y-0 left-0 z-40 w-64 bg-[#0a0a0a] border-r border-white/10 
+                    flex flex-col h-screen
+                    transform transition-transform duration-300 ease-in-out
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                    md:relative md:translate-x-0 md:flex
+                `}
             >
                 {/* Brand */}
                 <div className="p-6 border-b border-white/5">
@@ -131,7 +122,7 @@ export function Sidebar({ items, userType }: SidebarProps) {
                         <LogOut size={16} className="text-slate-500 hover:text-rose-400 transition-colors" />
                     </div>
                 </div>
-            </motion.aside>
+            </aside>
 
             {/* Overlay for mobile */}
             {isOpen && (

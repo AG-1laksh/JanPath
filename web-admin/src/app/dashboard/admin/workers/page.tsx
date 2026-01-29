@@ -186,10 +186,10 @@ export default function WorkersPage() {
     const departments = Array.from(new Set(MOCK_WORKERS.map(w => w.department)));
 
     return (
-        <div className="flex h-screen bg-[#050505] overflow-hidden">
+        <div className="flex h-screen w-full overflow-hidden bg-[#050505]">
             <Sidebar items={ADMIN_SIDEBAR_ITEMS} userType="admin" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header
                     title="Worker Management"
                     description="Manage and monitor field workers and their performance"
@@ -359,3 +359,5 @@ export default function WorkersPage() {
         </div>
     );
 }
+
+

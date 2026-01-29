@@ -49,10 +49,10 @@ export default function SuggestionBoxPage() {
     };
 
     return (
-        <div className="flex h-screen bg-[#F0F4F8] text-slate-800 overflow-hidden font-sans">
+        <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             <Sidebar items={CITIZEN_SIDEBAR_ITEMS} userType="citizen" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header title="Suggestion Box" description="Share ideas to improve your city." />
 
                 <div className="grid lg:grid-cols-2 gap-12">
@@ -117,3 +117,4 @@ export default function SuggestionBoxPage() {
         </div>
     );
 }
+

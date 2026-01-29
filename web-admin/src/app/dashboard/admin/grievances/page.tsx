@@ -135,10 +135,10 @@ export default function GrievancesPage() {
     });
 
     return (
-        <div className="flex h-screen bg-[#050505] overflow-hidden">
+        <div className="flex h-screen w-full overflow-hidden bg-[#050505]">
             <Sidebar items={ADMIN_SIDEBAR_ITEMS} userType="admin" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header
                     title="Grievance Management"
                     description="Manage and monitor all citizen grievances"
@@ -273,3 +273,5 @@ export default function GrievancesPage() {
         </div>
     );
 }
+
+

@@ -60,10 +60,10 @@ const MOCK_GRIEVANCES = [
 
 export default function CitizenGrievances() {
     return (
-        <div className="flex h-screen bg-[#F0F4F8] text-slate-800 overflow-hidden font-sans">
+        <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             <Sidebar items={CITIZEN_SIDEBAR_ITEMS} userType="citizen" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header title="My Grievances" description="Track and manage your submitted reports." />
 
                 {/* Actions Bar */}
@@ -147,3 +147,4 @@ export default function CitizenGrievances() {
         </div>
     );
 }
+

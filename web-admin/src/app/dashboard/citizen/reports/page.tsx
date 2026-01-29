@@ -24,10 +24,10 @@ const CITIZEN_SIDEBAR_ITEMS = [
 
 export default function ReportsPage() {
     return (
-        <div className="flex h-screen bg-[#F0F4F8] text-slate-800 overflow-hidden font-sans">
+        <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             <Sidebar items={CITIZEN_SIDEBAR_ITEMS} userType="citizen" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header title="Reports & Analytics" description="Visual insights into city performance." />
 
                 <div className="grid lg:grid-cols-2 gap-8 mb-8">
@@ -123,3 +123,4 @@ export default function ReportsPage() {
         </div>
     );
 }
+

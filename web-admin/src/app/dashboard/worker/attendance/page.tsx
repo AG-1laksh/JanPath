@@ -54,10 +54,10 @@ export default function AttendancePage() {
     };
 
     return (
-        <div className="flex h-screen bg-[#050505] overflow-hidden text-white">
+        <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-white">
             <Sidebar items={WORKER_SIDEBAR_ITEMS} userType="worker" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header
                     title="Attendance Tracking"
                     description="Monitor attendance, leave balance, and punctuality records."
@@ -268,3 +268,5 @@ export default function AttendancePage() {
         </div>
     );
 }
+
+

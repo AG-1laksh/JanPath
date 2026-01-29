@@ -31,10 +31,10 @@ export default function SettingsPage() {
     const [notifications, setNotifications] = useState(true);
 
     return (
-        <div className="flex h-screen bg-[#F0F4F8] text-slate-800 overflow-hidden font-sans">
+        <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             <Sidebar items={CITIZEN_SIDEBAR_ITEMS} userType="citizen" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header title="Settings" description="Manage your preferences and account." />
 
                 <div className="max-w-2xl space-y-8">
@@ -109,3 +109,4 @@ export default function SettingsPage() {
         </div>
     );
 }
+

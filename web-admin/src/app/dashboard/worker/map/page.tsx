@@ -55,10 +55,10 @@ export default function WorkerMapView() {
     const [liveTracking, setLiveTracking] = useState(true);
 
     return (
-        <div className="flex h-screen bg-[#050505] overflow-hidden text-white">
+        <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-white">
             <Sidebar items={WORKER_SIDEBAR_ITEMS} userType="worker" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header
                     title="Location Map"
                     description="Track active tasks, route progress, and nearby alerts."
@@ -146,3 +146,5 @@ export default function WorkerMapView() {
         </div>
     );
 }
+
+

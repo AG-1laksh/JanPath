@@ -14,7 +14,8 @@ import {
     Settings,
     Clock,
     CheckCircle,
-    RotateCcw
+    RotateCcw,
+    Activity
 } from "lucide-react";
 
 // Updated Sidebar items based on the provided image
@@ -46,7 +47,7 @@ const USER_DATA = {
 
 export default function CitizenDashboard() {
     return (
-        <div className="flex h-screen bg-[#F0F4F8] text-slate-800 overflow-hidden font-sans">
+        <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             {/* Note: The design in the image is light mode. Adjusting colors for this specific page if desired, 
                  or keeping dark mode for consistency. The prompt asked to include "like given in image". 
                  The image is LIGHT mode. I will adapt to a premium light/mixed mode or stick to the dark theme 
@@ -61,7 +62,7 @@ export default function CitizenDashboard() {
              */}
             <Sidebar items={CITIZEN_SIDEBAR_ITEMS} userType="citizen" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 {/* Re-overriding bg for dark mode consistency */}
 
                 <Header title="Overview" />
@@ -119,4 +120,4 @@ export default function CitizenDashboard() {
     );
 }
 
-import { Activity } from "lucide-react";
+

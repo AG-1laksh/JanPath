@@ -151,11 +151,17 @@ function BentoCard({
 }
 
 export default function Page() {
-  const { scrollYProgress } = useScroll();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ container: scrollRef });
   const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -120]);
 
   useEffect(() => {
-    const lenis = new Lenis({ smoothWheel: true, lerp: 0.08 });
+    if (!scrollRef.current) return;
+    const lenis = new Lenis({ 
+      wrapper: scrollRef.current,
+      smoothWheel: true, 
+      lerp: 0.08 
+    });
     let frame = 0;
     const raf = (time: number) => {
       lenis.raf(time);
@@ -166,7 +172,7 @@ export default function Page() {
   }, []);
 
   return (
-    <div className={styles.page}>
+    <div ref={scrollRef} className={`${styles.page} custom-scrollbar`}>
 
       <div className={styles.noise} />
 

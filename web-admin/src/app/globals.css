@@ -6,8 +6,36 @@
   color-scheme: dark;
 }
 
+html,
 body {
+  height: 100%;
   margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent body scroll, force internal scrolling */
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: #0f0518;
+  background: #050505;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar {
+  overflow-y: auto; /* Remove !important, let standard cascade work */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
 }

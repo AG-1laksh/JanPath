@@ -70,10 +70,10 @@ export default function NewGrievancePage() {
     };
 
     return (
-        <div className="flex h-screen bg-[#F0F4F8] text-slate-800 overflow-hidden font-sans">
+        <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             <Sidebar items={CITIZEN_SIDEBAR_ITEMS} userType="citizen" />
 
-            <main className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <div className="mb-6">
                     <Link href="/dashboard/citizen/grievances" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4 text-sm">
                         <ArrowLeft size={16} /> Back to Grievances
@@ -195,3 +195,4 @@ export default function NewGrievancePage() {
         </div>
     );
 }
+
