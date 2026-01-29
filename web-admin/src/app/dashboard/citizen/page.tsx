@@ -17,6 +17,7 @@ import {
     RotateCcw,
     Activity
 } from "lucide-react";
+import { useSettings } from "@/context/SettingsContext";
 
 // Updated Sidebar items based on the provided image
 const CITIZEN_SIDEBAR_ITEMS = [
@@ -46,6 +47,7 @@ const USER_DATA = {
 };
 
 export default function CitizenDashboard() {
+    const { t } = useSettings();
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             {/* Note: The design in the image is light mode. Adjusting colors for this specific page if desired, 
@@ -65,7 +67,7 @@ export default function CitizenDashboard() {
             <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 {/* Re-overriding bg for dark mode consistency */}
 
-                <Header title="Overview" />
+                <Header title={t("Overview")} />
 
                 <div className="grid lg:grid-cols-3 gap-8 items-start">
 
@@ -81,19 +83,19 @@ export default function CitizenDashboard() {
                     <div className="lg:col-span-1 space-y-6">
                         <div className="p-6 rounded-3xl bg-[#0a0a0a] border border-white/10">
                             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <Activity size={18} className="text-purple-400" /> Quick Stats
+                                <Activity size={18} className="text-purple-400" /> {t("Quick Stats")}
                             </h3>
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                                    <span className="text-slate-400 text-sm">Total</span>
+                                    <span className="text-slate-400 text-sm">{t("Total")}</span>
                                     <span className="text-lg font-bold text-white">0</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                                    <span className="text-slate-400 text-sm">Resolved</span>
+                                    <span className="text-slate-400 text-sm">{t("Resolved")}</span>
                                     <span className="text-lg font-bold text-emerald-400">0</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                                    <span className="text-slate-400 text-sm">Pending</span>
+                                    <span className="text-slate-400 text-sm">{t("Pending")}</span>
                                     <span className="text-lg font-bold text-orange-400">0</span>
                                 </div>
                             </div>

@@ -25,7 +25,7 @@ export default function WorkerLogin() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-[#050505] p-6 relative overflow-hidden">
+        <div className="min-h-screen w-full flex items-center justify-center bg-background p-6 relative overflow-hidden text-foreground">
             {/* Ambient Background Effects - Emerald/Lime */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[128px] pointer-events-none" />
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-lime-500/20 rounded-full blur-[128px] pointer-events-none" />
@@ -39,26 +39,26 @@ export default function WorkerLogin() {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className="hidden md:block"
                 >
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-emerald-200 mb-6">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent border border-border text-xs font-medium text-emerald-400 mb-6">
                         <HardHat size={14} className="text-emerald-400" />
                         Field Force Portal
                     </div>
 
-                    <h1 className="text-5xl font-bold tracking-tight text-white mb-4">
-                        Janpath <span className="text-white/40">Worker</span>
+                    <h1 className="text-5xl font-bold tracking-tight text-foreground mb-4">
+                        Janpath <span className="text-muted-foreground">Worker</span>
                     </h1>
-                    <p className="text-lg text-slate-400 max-w-md leading-relaxed mb-8">
+                    <p className="text-lg text-muted-foreground max-w-md leading-relaxed mb-8">
                         Manage tasks, update grievance status on the go, and coordinate with the control room efficiently.
                     </p>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
-                            <div className="text-2xl font-semibold text-white mb-1">Live</div>
-                            <div className="text-sm text-slate-500">Task Assignments</div>
+                        <div className="p-4 rounded-2xl bg-card border border-border backdrop-blur-sm">
+                            <div className="text-2xl font-semibold text-foreground mb-1">Live</div>
+                            <div className="text-sm text-muted-foreground">Task Assignments</div>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
-                            <div className="text-2xl font-semibold text-white mb-1">GPS</div>
-                            <div className="text-sm text-slate-500">Location Tracking</div>
+                        <div className="p-4 rounded-2xl bg-card border border-border backdrop-blur-sm">
+                            <div className="text-2xl font-semibold text-foreground mb-1">GPS</div>
+                            <div className="text-sm text-muted-foreground">Location Tracking</div>
                         </div>
                     </div>
                 </motion.div>
@@ -71,39 +71,39 @@ export default function WorkerLogin() {
                 >
                     <div className="relative group">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-lime-500 rounded-3xl opacity-30 group-hover:opacity-50 transition duration-500 blur-lg" />
-                        <div className="relative bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl">
+                        <div className="relative bg-card border border-border rounded-3xl p-8 shadow-2xl">
 
                             <div className="mb-8 text-center md:text-left">
-                                <h2 className="text-2xl font-semibold text-white mb-2">Field Login</h2>
-                                <p className="text-slate-400 text-sm">Enter you Worker ID to view assignments.</p>
+                                <h2 className="text-2xl font-semibold text-foreground mb-2">Field Login</h2>
+                                <p className="text-muted-foreground text-sm">Enter you Worker ID to view assignments.</p>
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-medium text-slate-300 ml-1 uppercase tracking-wider">Worker ID</label>
+                                    <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Worker ID</label>
                                     <div className="relative group/input">
-                                        <BadgeCheck className="absolute left-4 top-3.5 text-slate-500 group-focus-within/input:text-emerald-400 transition-colors" size={18} />
+                                        <BadgeCheck className="absolute left-4 top-3.5 text-muted-foreground group-focus-within/input:text-emerald-400 transition-colors" size={18} />
                                         <input
                                             type="text"
                                             value={workerId}
                                             onChange={(e) => setWorkerId(e.target.value)}
                                             placeholder="EMP-8024"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-12 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all uppercase"
+                                            className="w-full bg-muted border border-border rounded-xl px-12 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all uppercase"
                                             required
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-xs font-medium text-slate-300 ml-1 uppercase tracking-wider">Password</label>
+                                    <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Password</label>
                                     <div className="relative group/input">
-                                        <Hammer className="absolute left-4 top-3.5 text-slate-500 group-focus-within/input:text-emerald-400 transition-colors" size={18} />
+                                        <Hammer className="absolute left-4 top-3.5 text-muted-foreground group-focus-within/input:text-emerald-400 transition-colors" size={18} />
                                         <input
                                             type="password"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             placeholder="••••••••"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-12 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all"
+                                            className="w-full bg-muted border border-border rounded-xl px-12 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
                                             required
                                         />
                                     </div>
@@ -138,7 +138,7 @@ export default function WorkerLogin() {
                                 </button>
                             </form>
 
-                            <div className="mt-6 text-center flex items-center justify-center gap-2 text-xs text-slate-500">
+                            <div className="mt-6 text-center flex items-center justify-center gap-2 text-xs text-muted-foreground">
                                 <MapPin size={12} />
                                 <span>Location services must be enabled.</span>
                             </div>

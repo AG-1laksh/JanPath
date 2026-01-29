@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useSettings } from "@/context/SettingsContext";
 
 interface SidebarItem {
     icon: LucideIcon;
@@ -31,6 +32,7 @@ interface SidebarProps {
 export function Sidebar({ items, userType }: SidebarProps) {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
+    const { t } = useSettings();
 
     // Common items that might be at the bottom
     const bottomItems = [
@@ -50,7 +52,7 @@ export function Sidebar({ items, userType }: SidebarProps) {
             {/* Sidebar Container */}
             <aside
                 className={`
-                    fixed inset-y-0 left-0 z-40 w-64 bg-[#0a0a0a] border-r border-white/10 
+                    fixed inset-y-0 left-0 z-40 w-64 bg-sidebar border-r border-sidebar-border 
                     flex flex-col h-screen
                     transform transition-transform duration-300 ease-in-out
                     ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -58,15 +60,15 @@ export function Sidebar({ items, userType }: SidebarProps) {
                 `}
             >
                 {/* Brand */}
-                <div className="p-6 border-b border-white/5">
-                    <h1 className="text-2xl font-bold text-white tracking-tight">
-                        Janpath <span className="text-white/40 capitalize">{userType}</span>
+                <div className="p-6 border-b border-sidebar-border">
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                        Janpath <span className="text-muted-foreground opacity-50 capitalize">{t(userType)}</span>
                     </h1>
                 </div>
 
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">Menu</div>
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-500 uppercase tracking-wider mb-4 px-2">{t("Menu")}</div>
                     {items.map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -77,46 +79,46 @@ export function Sidebar({ items, userType }: SidebarProps) {
                                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                   ${isActive
-                                        ? 'bg-purple-600/10 text-purple-400 border border-purple-600/20'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        ? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border border-purple-600/20'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'
                                     }
                 `}
                             >
-                                <item.icon size={18} className={isActive ? 'text-purple-400' : 'text-slate-500 group-hover:text-white'} />
-                                <span className="font-medium">{item.label}</span>
+                                <item.icon size={18} className={isActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 group-hover:text-foreground'} />
+                                <span className="font-medium">{t(item.label)}</span>
                                 {isActive && (
                                     <motion.div
                                         layoutId="active-indicator"
-                                        className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-400"
+                                        className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-600 dark:bg-purple-400"
                                     />
                                 )}
                             </Link>
                         );
                     })}
 
-                    <div className="my-6 border-t border-white/5" />
+                    <div className="my-6 border-t border-sidebar-border" />
 
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">System</div>
+                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">{t("System")}</div>
                     {bottomItems.map((item) => (
                         <Link
                             key={item.href}
                             href={item.href}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-all"
                         >
-                            <item.icon size={18} className="text-slate-500 group-hover:text-white" />
-                            <span className="font-medium">{item.label}</span>
+                            <item.icon size={18} className="text-slate-500 group-hover:text-foreground" />
+                            <span className="font-medium">{t(item.label)}</span>
                         </Link>
                     ))}
                 </nav>
 
                 {/* User User Profile Snippet */}
-                <div className="p-4 border-t border-white/5 bg-white/2">
-                    <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                <div className="p-4 border-t border-sidebar-border bg-black/5 dark:bg-white/2">
+                    <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
                             {userType[0].toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-white truncate capitalize">{userType} User</div>
+                            <div className="text-sm font-medium text-foreground truncate capitalize">{t(userType)} User</div>
                             <div className="text-xs text-slate-500 truncate">user@janpath.gov</div>
                         </div>
                         <LogOut size={16} className="text-slate-500 hover:text-rose-400 transition-colors" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import {
@@ -14,8 +14,14 @@ import {
     AlertTriangle,
     PhoneCall,
     Thermometer,
-    User
+    User,
+    Moon,
+    Sun,
+    Globe,
+    Settings
 } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useSettings } from "@/context/SettingsContext";
 
 const WORKER_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "My Tasks", href: "/dashboard/worker" },
@@ -27,24 +33,107 @@ const WORKER_SIDEBAR_ITEMS = [
 ];
 
 export default function WorkerSettingsPage() {
+    const { theme, setTheme } = useTheme();
+    const { language, setLanguage } = useSettings();
+    const [mounted, setMounted] = useState(false);
+    
+    // Feature Toggles
     const [locationSharing, setLocationSharing] = useState(true);
     const [safetyCheck, setSafetyCheck] = useState(true);
     const [weatherAlerts, setWeatherAlerts] = useState(true);
     const [shiftNotifs, setShiftNotifs] = useState(true);
     const [incidentAlerts, setIncidentAlerts] = useState(false);
 
+    const [isLangOpen, setIsLangOpen] = useState(false);
+    const languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Kannada"] as const;
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
+
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-white">
+        <div className="flex h-screen w-full overflow-hidden">
             <Sidebar items={WORKER_SIDEBAR_ITEMS} userType="worker" />
 
-            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
+            <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-background text-foreground">
                 <Header
                     title="Settings"
                     description="Control safety, location sharing, and work notifications."
                 />
 
                 <div className="max-w-3xl space-y-8">
-                    <section className="p-6 rounded-3xl bg-[#0a0a0a] border border-white/10">
+                     {/* Appearance & Language (Common) */}
+                     <section className="p-6 rounded-3xl bg-card border border-border">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 rounded-full bg-purple-500/10 text-purple-400">
+                                <Settings size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold">Preferences</h3>
+                                <p className="text-sm text-slate-500">Customize your dashboard experience.</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-5">
+                             {/* Theme Toggle */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    {theme === 'dark' ? <Moon size={18} className="text-slate-400" /> : <Sun size={18} className="text-slate-400" />}
+                                    <div>
+                                        <div className="font-medium">Dark Mode</div>
+                                        <div className="text-sm text-slate-500">Switch between light and dark themes</div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                                    className={`w-12 h-7 rounded-full transition-colors relative ${theme === "dark" ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                >
+                                    <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-all ${theme === "dark" ? 'left-6' : 'left-1'}`} />
+                                </button>
+                            </div>
+                            
+                            {/* Language Selector */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <Globe size={18} className="text-slate-400" />
+                                    <div>
+                                        <div className="font-medium">Language</div>
+                                        <div className="text-sm text-slate-500">Platform language preference</div>
+                                    </div>
+                                </div>
+                                
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => setIsLangOpen(!isLangOpen)}
+                                        className="px-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 border border-border text-sm font-medium flex items-center gap-2"
+                                    >
+                                        {language}
+                                    </button>
+                                    {isLangOpen && (
+                                        <div className="absolute top-full right-0 mt-2 w-40 p-1 rounded-xl bg-card border border-border shadow-xl z-20 flex flex-col gap-1">
+                                            {languages.map((lang) => (
+                                                <button
+                                                    key={lang}
+                                                    onClick={() => {
+                                                        setLanguage(lang);
+                                                        setIsLangOpen(false);
+                                                    }}
+                                                    className={`px-3 py-2 text-sm rounded-lg text-left transition-colors ${language === lang ? 'bg-purple-600 text-white' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                                                >
+                                                    {lang}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <section className="p-6 rounded-3xl bg-card border border-border">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-3 rounded-full bg-emerald-500/10 text-emerald-400">
                                 <Navigation size={20} />
@@ -66,7 +155,7 @@ export default function WorkerSettingsPage() {
                                 </div>
                                 <button
                                     onClick={() => setLocationSharing(!locationSharing)}
-                                    className={`w-12 h-7 rounded-full transition-colors relative ${locationSharing ? "bg-emerald-600" : "bg-slate-700"}`}
+                                    className={`w-12 h-7 rounded-full transition-colors relative ${locationSharing ? "bg-emerald-600" : "bg-slate-300 dark:bg-slate-700"}`}
                                 >
                                     <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-all ${locationSharing ? "left-6" : "left-1"}`} />
                                 </button>
@@ -82,7 +171,7 @@ export default function WorkerSettingsPage() {
                                 </div>
                                 <button
                                     onClick={() => setSafetyCheck(!safetyCheck)}
-                                    className={`w-12 h-7 rounded-full transition-colors relative ${safetyCheck ? "bg-purple-600" : "bg-slate-700"}`}
+                                    className={`w-12 h-7 rounded-full transition-colors relative ${safetyCheck ? "bg-purple-600" : "bg-slate-300 dark:bg-slate-700"}`}
                                 >
                                     <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-all ${safetyCheck ? "left-6" : "left-1"}`} />
                                 </button>
@@ -90,7 +179,7 @@ export default function WorkerSettingsPage() {
                         </div>
                     </section>
 
-                    <section className="p-6 rounded-3xl bg-[#0a0a0a] border border-white/10">
+                    <section className="p-6 rounded-3xl bg-card border border-border">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-3 rounded-full bg-blue-500/10 text-blue-400">
                                 <Bell size={20} />

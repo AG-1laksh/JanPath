@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useSettings } from "@/context/SettingsContext";
 
 const CITIZEN_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard/citizen" },
@@ -59,12 +60,13 @@ const MOCK_GRIEVANCES = [
 ];
 
 export default function CitizenGrievances() {
+    const { t } = useSettings();
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#F0F4F8] text-slate-800 font-sans">
             <Sidebar items={CITIZEN_SIDEBAR_ITEMS} userType="citizen" />
 
             <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
-                <Header title="My Grievances" description="Track and manage your submitted reports." />
+                <Header title={t("My Grievances")} description={t("Track and manage your submitted reports.")} />
 
                 {/* Actions Bar */}
                 <div className="flex flex-col md:flex-row gap-4 mb-8 justify-between items-start md:items-center">
@@ -74,7 +76,7 @@ export default function CitizenGrievances() {
                             <Search className="absolute left-3 top-2.5 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={18} />
                             <input
                                 type="text"
-                                placeholder="Search grievance ID or title..."
+                                placeholder={t("Search grievance ID or title...")}
                                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all"
                             />
                         </div>
@@ -90,7 +92,7 @@ export default function CitizenGrievances() {
                             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium rounded-xl shadow-lg shadow-purple-500/20 transition-all"
                         >
                             <Plus size={20} />
-                            New Grievance
+                            {t("New Grievance")}
                         </motion.button>
                     </Link>
                 </div>

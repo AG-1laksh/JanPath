@@ -28,21 +28,21 @@ export function StatCard({ label, value, trend, trendUp, icon: Icon, color = "pu
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay }}
-            className="p-6 rounded-2xl bg-[#0a0a0a] border border-white/10 hover:border-white/20 transition-all group"
+            className="p-6 rounded-2xl bg-card border border-border hover:border-sidebar-border transition-all group"
         >
             <div className="flex justify-between items-start mb-4">
                 <div className={`p-3 rounded-xl border ${colorStyles}`}>
                     <Icon size={22} />
                 </div>
                 {trend && (
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 ${trendUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium bg-black/5 dark:bg-white/5 border border-border ${trendUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
                         {trend}
                     </div>
                 )}
             </div>
 
-            <h3 className="text-3xl font-bold text-white mb-1 group-hover:scale-105 transition-transform origin-left">{value}</h3>
-            <p className="text-sm text-slate-500 font-medium">{label}</p>
+            <h3 className="text-3xl font-bold text-foreground mb-1 group-hover:scale-105 transition-transform origin-left">{value}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{label}</p>
         </motion.div>
     );
 }

@@ -55,26 +55,26 @@ export function ProfileSection({ user, isComplete = false }: ProfileSectionProps
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="md:col-span-1 p-8 rounded-3xl bg-[#0a0a0a] border border-white/10 flex flex-col items-center justify-center text-center relative overflow-hidden group"
+                    className="md:col-span-1 p-8 rounded-3xl bg-card border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group"
                 >
                     <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                    <div className="w-32 h-32 rounded-full bg-[#1a1a1a] flex items-center justify-center text-4xl font-bold text-slate-300 mb-6 border-4 border-[#0a0a0a] shadow-xl relative z-10">
+                    <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center text-4xl font-bold text-foreground mb-6 border-4 border-card shadow-xl relative z-10">
                         {formData.avatarInitials}
                     </div>
 
-                    <h3 className="text-xl font-bold text-white mb-1">{formData.name}</h3>
-                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
+                    <h3 className="text-xl font-bold text-foreground mb-1">{formData.name}</h3>
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
                         <Mail size={14} />
                         {formData.email}
                     </div>
 
-                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    <span className="px-3 py-1 rounded-full bg-accent border border-border text-xs font-semibold text-foreground uppercase tracking-wider">
                         {formData.role}
                     </span>
 
-                    <div className="mt-8 pt-6 border-t border-white/5 w-full">
-                        <p className="text-xs text-slate-600">Member since {formData.joinDate}</p>
+                    <div className="mt-8 pt-6 border-t border-border w-full">
+                        <p className="text-xs text-muted-foreground">Member since {formData.joinDate}</p>
                     </div>
                 </motion.div>
 
@@ -83,15 +83,15 @@ export function ProfileSection({ user, isComplete = false }: ProfileSectionProps
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="md:col-span-2 p-8 rounded-3xl bg-[#0a0a0a] border border-white/10 relative"
+                    className="md:col-span-2 p-8 rounded-3xl bg-card border border-border relative"
                 >
                     <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-xl font-bold text-white">Profile Information</h3>
+                        <h3 className="text-xl font-bold text-foreground">Profile Information</h3>
                         <button
                             onClick={isEditing ? handleSave : () => setIsEditing(true)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isEditing
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
-                                : "bg-white/5 border border-white/10 hover:bg-white/10 text-white"
+                                ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
+                                : "bg-muted border border-border hover:bg-accent text-foreground"
                                 }`}
                         >
                             {isEditing ? <><Check size={16} /> Save Changes</> : <><Edit3 size={16} /> Edit Profile</>}
@@ -100,55 +100,55 @@ export function ProfileSection({ user, isComplete = false }: ProfileSectionProps
 
                     <div className="grid sm:grid-cols-2 gap-8">
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Full Name</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Full Name</label>
                             {isEditing ? (
                                 <input
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500/50"
+                                    className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:border-purple-500/50"
                                 />
                             ) : (
-                                <p className="text-white font-medium">{formData.name || "Not provided"}</p>
+                                <p className="text-foreground font-medium">{formData.name || "Not provided"}</p>
                             )}
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</label>
-                            <p className="text-slate-400 font-medium cursor-not-allowed">{formData.email}</p>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</label>
+                            <p className="text-muted-foreground font-medium cursor-not-allowed">{formData.email}</p>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phone</label>
                             {isEditing ? (
                                 <input
                                     type="text"
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500/50"
+                                    className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:border-purple-500/50"
                                 />
                             ) : (
-                                <p className="text-white font-medium">{formData.phone || "Not provided"}</p>
+                                <p className="text-foreground font-medium">{formData.phone || "Not provided"}</p>
                             )}
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">State</label>
-                            <p className="text-white font-medium">Jharkhand</p>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">State</label>
+                            <p className="text-foreground font-medium">Jharkhand</p>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">City</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">City</label>
                             {isEditing ? (
                                 <input
                                     type="text"
                                     value={formData.location}
                                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500/50"
+                                    className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:border-purple-500/50"
                                 />
                             ) : (
-                                <p className="text-white font-medium">{formData.location || "Not provided"}</p>
+                                <p className="text-foreground font-medium">{formData.location || "Not provided"}</p>
                             )}
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</label>
-                            <p className="text-white font-medium">Not provided</p>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Address</label>
+                            <p className="text-foreground font-medium">Not provided</p>
                         </div>
                     </div>
                 </motion.div>

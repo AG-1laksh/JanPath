@@ -2,8 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
+@layer base {
+  :root {
+    --background: 240 5% 96%; /* #F0F4F8 */
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --border: 214 32% 91%;
+    --sidebar-bg: 0 0% 100%;
+    --sidebar-border: 214 32% 91%;
+  }
+
+  .dark {
+    --background: 0 0% 2%; 
+    --foreground: 0 0% 98%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --sidebar-bg: 0 0% 4%;
+    --sidebar-border: 0 0% 15%;
+  }
 }
 
 html,
@@ -11,15 +29,19 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Prevent body scroll, force internal scrolling */
+  overflow: hidden;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: #050505;
+  @apply bg-background text-foreground;
 }
 
 /* Custom Scrollbar */
 .custom-scrollbar {
-  overflow-y: auto; /* Remove !important, let standard cascade work */
+  overflow-y: auto;
   scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.dark .custom-scrollbar {
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
