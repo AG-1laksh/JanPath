@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -284,6 +285,7 @@ export default function App() {
     priority: 'Medium',
   });
   const [imageBase64, setImageBase64] = useState('');
+  const [location, setLocation] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [grievances, setGrievances] = useState([]);
   const [selectedGrievance, setSelectedGrievance] = useState(null);
@@ -425,6 +427,7 @@ export default function App() {
         priority: form.priority,
         status: 'Submitted',
         imageBase64: imageBase64 || '',
+        location: location || null,
         userId: user.uid,
         assignedWorkerId: null,
         createdAt: serverTimestamp(),
@@ -442,6 +445,7 @@ export default function App() {
 
       setForm({ title: '', description: '', category: '', priority: 'Medium' });
       setImageBase64('');
+      setLocation(null);
       Alert.alert('Submitted', 'Your grievance has been submitted.');
     } catch (error) {
       Alert.alert('Submit failed', error.message || 'Please try again.');
@@ -525,6 +529,11 @@ export default function App() {
                 <Text style={styles.subTitle}>{selectedGrievance.title}</Text>
                 <Text style={styles.metaText}>Status: {selectedGrievance.status}</Text>
                 <Text style={styles.metaText}>Created: {formatDate(selectedGrievance.createdAt)}</Text>
+                {selectedGrievance.location ? (
+                  <Text style={styles.metaText}>
+                    Location: {selectedGrievance.location.address || ''} ({selectedGrievance.location.latitude?.toFixed(5)}, {selectedGrievance.location.longitude?.toFixed(5)})
+                  </Text>
+                ) : null}
                 {selectedGrievance.imageBase64 ? (
                   <Image
                     source={{ uri: `data:image/jpeg;base64,${selectedGrievance.imageBase64}` }}
@@ -607,6 +616,38 @@ export default function App() {
 
           <TouchableOpacity style={styles.primaryButton} onPress={pickImage}>
             <Text style={styles.primaryButtonText}>Pick image</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.secondaryButton} onPress={async () => {
+            try {
+              const { status } = await Location.requestForegroundPermissionsAsync();
+              if (status !== 'granted') {
+                Alert.alert('Permission needed', 'Please allow location access.');
+                return;
+              }
+              const current = await Location.getCurrentPositionAsync({});
+              const [place] = await Location.reverseGeocodeAsync({
+                latitude: current.coords.latitude,
+                longitude: current.coords.longitude,
+              });
+              const address = place
+                ? [place.name, place.street, place.city, place.region]
+                    .filter(Boolean)
+                    .join(', ')
+                : '';
+              setLocation({
+                latitude: current.coords.latitude,
+                longitude: current.coords.longitude,
+                address,
+              });
+            } catch (error) {
+              Alert.alert('Location failed', error?.message || 'Please try again.');
+            }
+          }}>
+            <Text style={styles.secondaryButtonText}>
+              {location
+                ? `${location.address || 'Location'} (${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)})`
+                : 'Use current location'}
+            </Text>
           </TouchableOpacity>
           {imageBase64 ? (
             <Image
@@ -859,6 +900,19 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#fff',
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#c7d2f2',
+    marginBottom: 8,
+  },
+  secondaryButtonText: {
+    color: '#3b6ef5',
     fontWeight: '600',
   },
 });

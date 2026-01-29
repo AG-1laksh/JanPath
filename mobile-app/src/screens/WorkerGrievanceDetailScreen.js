@@ -110,6 +110,12 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack, mode }) =
         <Text style={styles.label}>Description</Text>
         <Text style={styles.value}>{grievance?.description}</Text>
 
+        {grievance?.location ? (
+          <Text style={styles.value}>
+            Location: {grievance.location.address || ''} ({grievance.location.latitude?.toFixed(5)}, {grievance.location.longitude?.toFixed(5)})
+          </Text>
+        ) : null}
+
         {grievance?.imageBase64 ? (
           <Image
             source={{ uri: `data:image/jpeg;base64,${grievance.imageBase64}` }}

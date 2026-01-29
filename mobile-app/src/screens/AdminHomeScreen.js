@@ -241,6 +241,11 @@ const AdminHomeScreen = ({ currentUser }) => {
               <Text style={styles.cardMeta}>Priority: {grievanceDetail.priority}</Text>
               <Text style={styles.cardMeta}>Status: {grievanceDetail.status}</Text>
               <Text style={styles.cardMeta}>Description: {grievanceDetail.description}</Text>
+              {grievanceDetail.location ? (
+                <Text style={styles.cardMeta}>
+                  Location: {grievanceDetail.location.address || ''} ({grievanceDetail.location.latitude?.toFixed(5)}, {grievanceDetail.location.longitude?.toFixed(5)})
+                </Text>
+              ) : null}
               {grievanceDetail.imageBase64 ? (
                 <Image
                   source={{ uri: `data:image/jpeg;base64,${grievanceDetail.imageBase64}` }}
@@ -269,6 +274,11 @@ const AdminHomeScreen = ({ currentUser }) => {
               <Text style={styles.cardMeta}>Priority: {grievanceDetail.priority}</Text>
               <Text style={styles.cardMeta}>Status: {grievanceDetail.status}</Text>
               <Text style={styles.cardMeta}>Description: {grievanceDetail.description}</Text>
+              {grievanceDetail.location ? (
+                <Text style={styles.cardMeta}>
+                  Location: {grievanceDetail.location.address || ''} ({grievanceDetail.location.latitude?.toFixed(5)}, {grievanceDetail.location.longitude?.toFixed(5)})
+                </Text>
+              ) : null}
               {grievanceDetail.imageBase64 ? (
                 <Image
                   source={{ uri: `data:image/jpeg;base64,${grievanceDetail.imageBase64}` }}
