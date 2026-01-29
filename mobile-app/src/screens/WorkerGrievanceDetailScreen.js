@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Button, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -54,6 +54,13 @@ const WorkerGrievanceDetailScreen = ({ grievance, currentUser, onBack }) => {
 
         <Text style={styles.label}>Description</Text>
         <Text style={styles.value}>{grievance?.description}</Text>
+
+        {grievance?.imageBase64 ? (
+          <Image
+            source={{ uri: `data:image/jpeg;base64,${grievance.imageBase64}` }}
+            style={styles.preview}
+          />
+        ) : null}
 
         <Text style={styles.label}>Current Status</Text>
         <Text style={styles.value}>{status}</Text>
@@ -113,6 +120,12 @@ const styles = StyleSheet.create({
   buttonGroup: {
     marginTop: 20,
     gap: 10,
+  },
+  preview: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginTop: 12,
   },
 });
 

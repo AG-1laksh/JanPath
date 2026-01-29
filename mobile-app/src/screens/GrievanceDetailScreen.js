@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Button, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 
-const GrievanceDetailScreen = ({ grievanceId, onBack }) => {
+const GrievanceDetailScreen = ({ grievanceId, onBack, grievance }) => {
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
@@ -42,6 +42,13 @@ const GrievanceDetailScreen = ({ grievanceId, onBack }) => {
           <Text style={styles.title}>Status Timeline</Text>
           <Button title="Back" onPress={onBack} />
         </View>
+
+        {grievance?.imageBase64 ? (
+          <Image
+            source={{ uri: `data:image/jpeg;base64,${grievance.imageBase64}` }}
+            style={styles.preview}
+          />
+        ) : null}
 
         {logs.length === 0 ? (
           <Text style={styles.emptyText}>No updates yet.</Text>
@@ -128,6 +135,12 @@ const styles = StyleSheet.create({
   remarksText: {
     color: '#1f2a44',
     marginTop: 4,
+  },
+  preview: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 12,
   },
 });
 

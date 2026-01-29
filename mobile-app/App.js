@@ -4,6 +4,7 @@ import {
   Alert,
   Button,
   Image,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -219,20 +220,36 @@ export default function App() {
   }, [form]);
 
   const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission needed', 'Please allow access to photos to attach an image.');
-      return;
-    }
+    try {
+      const existing = await ImagePicker.getMediaLibraryPermissionsAsync();
+      let permission = existing;
+      if (!permission.granted) {
+        permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: [ImagePicker.MediaType.Images],
-      base64: true,
-      quality: 0.6,
-    });
+      if (!permission.granted) {
+        Alert.alert('Permission needed', 'Please allow access to photos to attach an image.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]);
+        return;
+      }
 
-    if (!result.canceled && result.assets?.length) {
-      setImageBase64(result.assets[0].base64 || '');
+      const mediaTypes = ImagePicker.MediaType?.Images
+        ? [ImagePicker.MediaType.Images]
+        : undefined;
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        ...(mediaTypes ? { mediaTypes } : {}),
+        base64: true,
+        quality: 0.6,
+      });
+
+      if (!result.canceled && result.assets?.length) {
+        setImageBase64(result.assets[0].base64 || '');
+      }
+    } catch (error) {
+      Alert.alert('Image picker failed', error?.message || 'Please try again.');
     }
   };
 
@@ -328,6 +345,12 @@ export default function App() {
             <Text style={styles.subTitle}>{selectedGrievance.title}</Text>
             <Text style={styles.metaText}>Status: {selectedGrievance.status}</Text>
             <Text style={styles.metaText}>Created: {formatDate(selectedGrievance.createdAt)}</Text>
+            {selectedGrievance.imageBase64 ? (
+              <Image
+                source={{ uri: `data:image/jpeg;base64,${selectedGrievance.imageBase64}` }}
+                style={styles.preview}
+              />
+            ) : null}
 
             {timeline.length === 0 && <Text style={styles.emptyText}>No updates yet.</Text>}
 
@@ -389,7 +412,9 @@ export default function App() {
             ))}
           </View>
 
-          <Button title="Pick image" onPress={pickImage} />
+          <TouchableOpacity style={styles.primaryButton} onPress={pickImage}>
+            <Text style={styles.primaryButtonText}>Pick image</Text>
+          </TouchableOpacity>
           {imageBase64 ? (
             <Image
               source={{ uri: `data:image/jpeg;base64,${imageBase64}` }}
@@ -552,5 +577,16 @@ const styles = StyleSheet.create({
   timelineStatus: {
     fontWeight: '700',
     color: '#1f2a44',
+  },
+  primaryButton: {
+    backgroundColor: '#3b6ef5',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
