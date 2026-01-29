@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, Modal, ScrollView, FlatList, TextInput, Image, Alert, Switch, Linking } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Modal, ScrollView, FlatList, TextInput, Image, Alert, Switch, Linking, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { signOut } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy, addDoc, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy, addDoc, deleteDoc, serverTimestamp, writeBatch, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import ProfileScreen from './ProfileScreen';
 
@@ -63,10 +63,10 @@ const UserDashboard = ({ grievances, onNavigate, onSelectGrievance }) => {
           {pendingGrievances.slice(0, 3).map((item) => (
             <TouchableOpacity key={item.id} style={dashStyles.grievanceCard} onPress={() => onSelectGrievance(item)}>
               <View style={[dashStyles.grievanceIcon, { backgroundColor: item.status === 'In Progress' ? '#fef3c7' : '#eff6ff' }]}>
-                <Ionicons 
-                  name={item.status === 'In Progress' ? 'time' : 'document-text'} 
-                  size={20} 
-                  color={item.status === 'In Progress' ? '#f59e0b' : '#3b82f6'} 
+                <Ionicons
+                  name={item.status === 'In Progress' ? 'time' : 'document-text'}
+                  size={20}
+                  color={item.status === 'In Progress' ? '#f59e0b' : '#3b82f6'}
                 />
               </View>
               <View style={dashStyles.grievanceInfo}>
@@ -324,9 +324,9 @@ const createStyles = StyleSheet.create({
 const MyComplaintsTab = ({ grievances, onSelectGrievance, onDelete }) => {
   const [filter, setFilter] = useState('all');
 
-  const filteredGrievances = filter === 'all' ? grievances : 
+  const filteredGrievances = filter === 'all' ? grievances :
     filter === 'active' ? grievances.filter(g => g.status !== 'Resolved' && g.status !== 'Closed') :
-    grievances.filter(g => g.status === 'Resolved' || g.status === 'Closed');
+      grievances.filter(g => g.status === 'Resolved' || g.status === 'Closed');
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -413,6 +413,214 @@ const complaintsStyles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyText: { fontSize: 16, fontWeight: '600', color: '#64748b', marginTop: 12 },
   emptySubtext: { fontSize: 14, color: '#94a3b8', marginTop: 4 },
+});
+
+// Community Tab - Public complaints with voting and sharing
+const CommunityTab = ({ currentUser, onSelectGrievance }) => {
+  const [allGrievances, setAllGrievances] = useState([]);
+  const [sortBy, setSortBy] = useState('recent');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'grievances'),
+      orderBy('createdAt', 'desc')
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAllGrievances(data);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const sortedGrievances = [...allGrievances].sort((a, b) => {
+    if (sortBy === 'upvotes') {
+      const aVotes = (a.upvotes?.length || 0) - (a.downvotes?.length || 0);
+      const bVotes = (b.upvotes?.length || 0) - (b.downvotes?.length || 0);
+      return bVotes - aVotes;
+    }
+    return 0;
+  });
+
+  const handleVote = async (grievanceId, voteType) => {
+    if (!currentUser?.uid) return;
+    const grievanceRef = doc(db, 'grievances', grievanceId);
+    const grievance = allGrievances.find(g => g.id === grievanceId);
+
+    const upvotes = grievance?.upvotes || [];
+    const downvotes = grievance?.downvotes || [];
+    const hasUpvoted = upvotes.includes(currentUser.uid);
+    const hasDownvoted = downvotes.includes(currentUser.uid);
+
+    try {
+      if (voteType === 'up') {
+        if (hasUpvoted) {
+          // Remove upvote
+          const newUpvotes = upvotes.filter(id => id !== currentUser.uid);
+          await updateDoc(grievanceRef, { upvotes: newUpvotes });
+        } else {
+          // Add upvote, remove from downvotes if present
+          const newUpvotes = [...upvotes, currentUser.uid];
+          const newDownvotes = downvotes.filter(id => id !== currentUser.uid);
+          await updateDoc(grievanceRef, { upvotes: newUpvotes, downvotes: newDownvotes });
+        }
+      } else {
+        if (hasDownvoted) {
+          // Remove downvote
+          const newDownvotes = downvotes.filter(id => id !== currentUser.uid);
+          await updateDoc(grievanceRef, { downvotes: newDownvotes });
+        } else {
+          // Add downvote, remove from upvotes if present
+          const newDownvotes = [...downvotes, currentUser.uid];
+          const newUpvotes = upvotes.filter(id => id !== currentUser.uid);
+          await updateDoc(grievanceRef, { upvotes: newUpvotes, downvotes: newDownvotes });
+        }
+      }
+    } catch (error) {
+      console.error('Vote error:', error);
+      Alert.alert('Error', 'Failed to register vote. Please try again.');
+    }
+  };
+
+
+  const handleShare = async (grievance) => {
+    const shareUrl = `https://janpath.app/complaint/${grievance.id}`;
+    const message = `Check out this complaint on JanPath: "${grievance.title}"\n\n${shareUrl}`;
+
+    try {
+      await Share.share({ message, title: grievance.title });
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share complaint.');
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'In Progress': return { bg: '#fef3c7', text: '#f59e0b' };
+      case 'Completed': case 'Resolved': return { bg: '#f0fdf4', text: '#22c55e' };
+      case 'Assigned': return { bg: '#ede9fe', text: '#8b5cf6' };
+      default: return { bg: '#eff6ff', text: '#3b82f6' };
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={communityStyles.emptyContainer}>
+        <Text style={communityStyles.loadingText}>Loading complaints...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={communityStyles.container}>
+      <View style={communityStyles.sortRow}>
+        <Text style={communityStyles.sortLabel}>Sort by:</Text>
+        <TouchableOpacity
+          style={[communityStyles.sortBtn, sortBy === 'recent' && communityStyles.sortBtnActive]}
+          onPress={() => setSortBy('recent')}
+        >
+          <Ionicons name="time-outline" size={16} color={sortBy === 'recent' ? '#fff' : '#64748b'} />
+          <Text style={[communityStyles.sortText, sortBy === 'recent' && communityStyles.sortTextActive]}>Recent</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[communityStyles.sortBtn, sortBy === 'upvotes' && communityStyles.sortBtnActive]}
+          onPress={() => setSortBy('upvotes')}
+        >
+          <Ionicons name="trending-up-outline" size={16} color={sortBy === 'upvotes' ? '#fff' : '#64748b'} />
+          <Text style={[communityStyles.sortText, sortBy === 'upvotes' && communityStyles.sortTextActive]}>Top Voted</Text>
+        </TouchableOpacity>
+      </View>
+
+      {sortedGrievances.length === 0 ? (
+        <View style={communityStyles.emptyContainer}>
+          <Ionicons name="people-outline" size={48} color="#cbd5e1" />
+          <Text style={communityStyles.emptyText}>No complaints yet</Text>
+          <Text style={communityStyles.emptySubtext}>Be the first to report an issue!</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={sortedGrievances}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={communityStyles.list}
+          renderItem={({ item }) => {
+            const colors = getStatusColor(item.status);
+            const upvoteCount = item.upvotes?.length || 0;
+            const downvoteCount = item.downvotes?.length || 0;
+            const hasUpvoted = item.upvotes?.includes(currentUser?.uid);
+            const hasDownvoted = item.downvotes?.includes(currentUser?.uid);
+
+            return (
+              <View style={communityStyles.card}>
+                <TouchableOpacity onPress={() => onSelectGrievance(item)}>
+                  <Text style={communityStyles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                  <Text style={communityStyles.cardDesc} numberOfLines={2}>{item.description}</Text>
+                  <View style={communityStyles.cardMeta}>
+                    <View style={[communityStyles.badge, { backgroundColor: '#eff6ff' }]}>
+                      <Text style={[communityStyles.badgeText, { color: '#3b82f6' }]}>{item.category}</Text>
+                    </View>
+                    <View style={[communityStyles.badge, { backgroundColor: colors.bg }]}>
+                      <Text style={[communityStyles.badgeText, { color: colors.text }]}>{item.status}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                <View style={communityStyles.actionRow}>
+                  <TouchableOpacity
+                    style={[communityStyles.voteBtn, hasUpvoted && communityStyles.voteBtnActive]}
+                    onPress={() => handleVote(item.id, 'up')}
+                  >
+                    <Ionicons name={hasUpvoted ? 'arrow-up' : 'arrow-up-outline'} size={18} color={hasUpvoted ? '#22c55e' : '#64748b'} />
+                    <Text style={[communityStyles.voteText, hasUpvoted && { color: '#22c55e' }]}>{upvoteCount}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[communityStyles.voteBtn, hasDownvoted && communityStyles.voteBtnActive]}
+                    onPress={() => handleVote(item.id, 'down')}
+                  >
+                    <Ionicons name={hasDownvoted ? 'arrow-down' : 'arrow-down-outline'} size={18} color={hasDownvoted ? '#ef4444' : '#64748b'} />
+                    <Text style={[communityStyles.voteText, hasDownvoted && { color: '#ef4444' }]}>{downvoteCount}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={communityStyles.shareBtn} onPress={() => handleShare(item)}>
+                    <Ionicons name="share-social-outline" size={18} color="#3b82f6" />
+                    <Text style={communityStyles.shareText}>Share</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          }}
+        />
+      )}
+    </View>
+  );
+};
+
+const communityStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f8fafc' },
+  sortRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 8 },
+  sortLabel: { fontSize: 14, fontWeight: '600', color: '#64748b', marginRight: 4 },
+  sortBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', gap: 4 },
+  sortBtnActive: { backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
+  sortText: { fontSize: 13, fontWeight: '600', color: '#64748b' },
+  sortTextActive: { color: '#fff' },
+  list: { padding: 16, paddingTop: 0 },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  cardTitle: { fontSize: 16, fontWeight: '600', color: '#1e293b', marginBottom: 6 },
+  cardDesc: { fontSize: 14, color: '#64748b', marginBottom: 12, lineHeight: 20 },
+  cardMeta: { flexDirection: 'row', gap: 8, marginBottom: 14 },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  badgeText: { fontSize: 12, fontWeight: '600' },
+  actionRow: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 12, gap: 4 },
+  voteBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#f8fafc', gap: 4 },
+  voteBtnActive: { backgroundColor: '#f0fdf4' },
+  voteText: { fontSize: 14, fontWeight: '600', color: '#64748b' },
+  shareBtn: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#eff6ff', gap: 6 },
+  shareText: { fontSize: 14, fontWeight: '600', color: '#3b82f6' },
+  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+  emptyText: { fontSize: 16, fontWeight: '600', color: '#64748b', marginTop: 12 },
+  emptySubtext: { fontSize: 14, color: '#94a3b8', marginTop: 4 },
+  loadingText: { fontSize: 14, color: '#64748b' },
 });
 
 // Grievance Detail Screen
@@ -707,6 +915,7 @@ const UserNavigation = ({ currentUser }) => {
 
   const tabs = [
     { key: 'Home', icon: 'home', iconOutline: 'home-outline' },
+    { key: 'Community', icon: 'people', iconOutline: 'people-outline' },
     { key: 'Create', icon: 'add-circle', iconOutline: 'add-circle-outline' },
     { key: 'My Complaints', icon: 'document-text', iconOutline: 'document-text-outline' },
   ];
@@ -725,6 +934,7 @@ const UserNavigation = ({ currentUser }) => {
     if (showProfile) return 'My Profile';
     if (showSettings) return 'Settings';
     if (showHelp) return 'Help & Support';
+    if (activeTab === 'Community') return 'Community';
     if (activeTab === 'Create') return 'Report Problem';
     if (activeTab === 'My Complaints') return 'My Complaints';
     return 'JanPath';
@@ -735,9 +945,10 @@ const UserNavigation = ({ currentUser }) => {
     if (showProfile) return <ProfileScreen currentUser={currentUser} />;
     if (showSettings) return <SettingsScreen />;
     if (showHelp) return <HelpScreen />;
-    
+
     switch (activeTab) {
       case 'Home': return <UserDashboard grievances={grievances} onNavigate={setActiveTab} onSelectGrievance={setSelectedGrievance} />;
+      case 'Community': return <CommunityTab currentUser={currentUser} onSelectGrievance={setSelectedGrievance} />;
       case 'Create': return <CreateGrievanceTab currentUser={currentUser} onSuccess={() => setActiveTab('My Complaints')} />;
       case 'My Complaints': return <MyComplaintsTab grievances={grievances} onSelectGrievance={setSelectedGrievance} onDelete={deleteGrievance} />;
       default: return <UserDashboard grievances={grievances} onNavigate={setActiveTab} onSelectGrievance={setSelectedGrievance} />;
