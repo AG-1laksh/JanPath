@@ -55,9 +55,38 @@ export default function NewGrievancePage() {
             return;
         }
         navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-                setLocation(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+            async (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                setCoords({ latitude: lat, longitude: lng });
+                setLocation(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+
+                // Try to get readable address using reverse geocoding
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+                    );
+                    const data = await response.json();
+                    if (data.display_name) {
+                        // Extract key parts: suburb/neighbourhood, city, state
+                        const parts = [];
+                        const addr = data.address || {};
+                        if (addr.neighbourhood || addr.suburb || addr.road) {
+                            parts.push(addr.neighbourhood || addr.suburb || addr.road);
+                        }
+                        if (addr.city || addr.town || addr.village) {
+                            parts.push(addr.city || addr.town || addr.village);
+                        }
+                        if (addr.state) {
+                            parts.push(addr.state);
+                        }
+                        const readableAddress = parts.length > 0 ? parts.join(", ") : data.display_name;
+                        setLocation(readableAddress);
+                    }
+                } catch (error) {
+                    // Keep coordinates if geocoding fails
+                    console.log("Geocoding failed, using coordinates");
+                }
             },
             () => setLocation("Location unavailable"),
             { enableHighAccuracy: true, timeout: 8000 }
@@ -177,8 +206,8 @@ export default function NewGrievancePage() {
                                         type="button"
                                         onClick={() => setIsPublic(true)}
                                         className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-all ${isPublic
-                                                ? "bg-emerald-600/20 border border-emerald-500 text-emerald-300"
-                                                : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
+                                            ? "bg-emerald-600/20 border border-emerald-500 text-emerald-300"
+                                            : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
                                             }`}
                                     >
                                         <Globe size={18} />
@@ -188,8 +217,8 @@ export default function NewGrievancePage() {
                                         type="button"
                                         onClick={() => setIsPublic(false)}
                                         className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-all ${!isPublic
-                                                ? "bg-orange-600/20 border border-orange-500 text-orange-300"
-                                                : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
+                                            ? "bg-orange-600/20 border border-orange-500 text-orange-300"
+                                            : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
                                             }`}
                                     >
                                         <Lock size={18} />
