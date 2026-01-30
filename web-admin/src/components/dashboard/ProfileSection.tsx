@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Edit3, Check } from "lucide-react";
+import { Mail, Phone, MapPin, Edit3, Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 interface ProfileSectionProps {
     user: {
@@ -20,16 +21,32 @@ interface ProfileSectionProps {
 }
 
 export function ProfileSection({ user, isComplete = false }: ProfileSectionProps) {
+    const { updateProfile } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState(user);
 
     useEffect(() => {
         setFormData(user);
     }, [user]);
 
-    const handleSave = () => {
-        setIsEditing(false);
-        // Logic to save to backend would go here
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            await updateProfile({
+                name: formData.name,
+                phone: formData.phone || null,
+                state: formData.state || null,
+                city: formData.location || null,
+                address: formData.address || null,
+            });
+            setIsEditing(false);
+        } catch (error) {
+            console.error("Failed to save profile:", error);
+            alert("Failed to save profile. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const requiredStatus = {
@@ -112,12 +129,19 @@ export function ProfileSection({ user, isComplete = false }: ProfileSectionProps
                         <h3 className="text-xl font-bold text-foreground">Profile Information</h3>
                         <button
                             onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                            disabled={isSaving}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isEditing
                                 ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
                                 : "bg-muted border border-border hover:bg-accent text-foreground"
-                                }`}
+                                } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
-                            {isEditing ? <><Check size={16} /> Save Changes</> : <><Edit3 size={16} /> Edit Profile</>}
+                            {isSaving ? (
+                                <><Loader2 size={16} className="animate-spin" /> Saving...</>
+                            ) : isEditing ? (
+                                <><Check size={16} /> Save Changes</>
+                            ) : (
+                                <><Edit3 size={16} /> Edit Profile</>
+                            )}
                         </button>
                     </div>
 

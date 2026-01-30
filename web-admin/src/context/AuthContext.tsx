@@ -26,6 +26,7 @@ type AuthContextValue = {
   role: UserProfile["role"] | null;
   loading: boolean;
   signOutUser: () => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -86,6 +87,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
+  const updateProfile = async (updates: Partial<UserProfile>) => {
+    if (!user || !db) return;
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, updates, { merge: true });
+
+      // Update local state
+      setProfile((prev) => prev ? { ...prev, ...updates } : null);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      throw error;
+    }
+  };
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -97,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await signOut(auth);
         }
       },
+      updateProfile,
     }),
     [user, profile, loading]
   );
