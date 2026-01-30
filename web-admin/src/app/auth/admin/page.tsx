@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
@@ -13,6 +15,7 @@ const ADMIN_EMAIL = "admin@test.com";
 
 export default function AdminLoginPage() {
     const router = useRouter();
+    const { user, role, loading } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -46,6 +49,13 @@ export default function AdminLoginPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (loading || !user) return;
+        if (role === "ADMIN") router.replace("/dashboard/admin");
+        else if (role === "WORKER") router.replace("/dashboard/worker");
+        else router.replace("/dashboard/citizen");
+    }, [loading, role, router, user]);
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-background p-6 relative overflow-hidden text-foreground">

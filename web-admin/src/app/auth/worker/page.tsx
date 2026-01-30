@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
@@ -11,19 +13,20 @@ import { ArrowRight, Loader2, BadgeCheck, HardHat, Hammer, MapPin, AlertCircle }
 
 export default function WorkerLogin() {
     const router = useRouter();
+    const { user, role, loading: authLoading } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
-        setLoading(true);
+        setIsLoading(true);
 
         if (!auth || !db) {
             setError("System Error: Firebase not configured.");
-            setLoading(false);
+            setIsLoading(false);
             return;
         }
 
@@ -35,15 +38,22 @@ export default function WorkerLogin() {
             if (role !== "WORKER") {
                 setError("Access Denied: Worker privileges required.");
                 await signOut(auth);
-                setLoading(false);
+                setIsLoading(false);
                 return;
             }
             router.push("/dashboard/worker");
         } catch (err) {
             setError("The email or password you entered is incorrect.");
-            setLoading(false);
+            setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (authLoading || !user) return;
+        if (role === "WORKER") router.replace("/dashboard/worker");
+        else if (role === "ADMIN") router.replace("/dashboard/admin");
+        else router.replace("/dashboard/citizen");
+    }, [authLoading, role, router, user]);
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-background p-6 relative overflow-hidden text-foreground">
@@ -146,10 +156,10 @@ export default function WorkerLogin() {
 
                                 <button
                                     type="submit"
-                                    disabled={loading}
+                                    disabled={isLoading}
                                     className="w-full bg-gradient-to-r from-emerald-600 to-lime-600 hover:from-emerald-500 hover:to-lime-500 text-white font-medium py-3.5 rounded-xl transition-all shine-effect disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 mt-2"
                                 >
-                                    {loading ? (
+                                    {isLoading ? (
                                         <Loader2 className="animate-spin" size={20} />
                                     ) : (
                                         <>

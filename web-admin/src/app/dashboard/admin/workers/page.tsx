@@ -21,7 +21,7 @@ import {
     Activity
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const ADMIN_SIDEBAR_ITEMS = [
@@ -52,6 +52,10 @@ export default function WorkersPage() {
     const [departmentFilter, setDepartmentFilter] = useState<string>("all");
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [grievances, setGrievances] = useState<any[]>([]);
+    const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+    const [assignWorker, setAssignWorker] = useState<Worker | null>(null);
+    const [selectedGrievanceId, setSelectedGrievanceId] = useState("");
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         if (!db) return;
@@ -88,8 +92,9 @@ export default function WorkersPage() {
     };
 
     const enrichedWorkers = useMemo(() => {
-        const activeAssignments = grievances.filter((g) => g.status !== "Resolved" && g.status !== "Closed");
-        const completedAssignments = grievances.filter((g) => g.status === "Resolved" || g.status === "Closed");
+        const completedStatuses = new Set(["Completed", "Resolved", "Closed"]);
+        const activeAssignments = grievances.filter((g) => !completedStatuses.has(g.status));
+        const completedAssignments = grievances.filter((g) => completedStatuses.has(g.status));
 
         return workers.map((worker) => {
             const assigned = activeAssignments.filter((g) => g.assignedWorkerId === worker.id).length;
@@ -125,6 +130,32 @@ export default function WorkersPage() {
             { label: "Avg Completion Time", value: "-", icon: Clock, color: "yellow" },
         ];
     }, [enrichedWorkers, grievances, workers.length]);
+
+    const unassignedGrievances = useMemo(() => {
+        return grievances.filter((g) => !g.assignedWorkerId);
+    }, [grievances]);
+
+    const handleAssign = async () => {
+        if (!db || !assignWorker || !selectedGrievanceId) return;
+        try {
+            setSaving(true);
+            await updateDoc(doc(db, "grievances", selectedGrievanceId), {
+                assignedWorkerId: assignWorker.id,
+                status: "Assigned",
+            });
+            await addDoc(collection(db, "statusLogs"), {
+                grievanceId: selectedGrievanceId,
+                status: "Assigned",
+                updatedBy: "admin",
+                remarks: `Assigned to ${assignWorker.name || assignWorker.email || assignWorker.id}`,
+                timestamp: serverTimestamp(),
+            });
+            setAssignWorker(null);
+            setSelectedGrievanceId("");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#050505]">
@@ -205,7 +236,7 @@ export default function WorkersPage() {
                                         </span>
                                     </div>
                                 </div>
-                                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors" onClick={() => setSelectedWorker(worker)}>
                                     <MoreVertical size={18} className="text-slate-400" />
                                 </button>
                             </div>
@@ -277,10 +308,16 @@ export default function WorkersPage() {
                                     Joined {worker.joinedAt || "-"}
                                 </div>
                                 <div className="flex gap-1">
-                                    <button className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors text-xs text-purple-400 font-medium">
+                                    <button
+                                        className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors text-xs text-purple-400 font-medium"
+                                        onClick={() => {
+                                            setAssignWorker(worker);
+                                            setSelectedGrievanceId("");
+                                        }}
+                                    >
                                         Assign Task
                                     </button>
-                                    <button className="p-1.5 hover:bg-white/10 rounded-lg transition-colors group">
+                                    <button className="p-1.5 hover:bg-white/10 rounded-lg transition-colors group" onClick={() => setSelectedWorker(worker)}>
                                         <Eye size={14} className="text-slate-400 group-hover:text-purple-400" />
                                     </button>
                                 </div>
@@ -293,6 +330,79 @@ export default function WorkersPage() {
                     <div className="py-12 text-center rounded-3xl bg-[#0a0a0a] border border-white/10">
                         <Users size={48} className="mx-auto text-slate-700 mb-4" />
                         <p className="text-slate-400">No workers found matching your filters</p>
+                    </div>
+                )}
+
+                {selectedWorker && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                        <div className="w-full max-w-3xl rounded-2xl bg-[#0a0a0a] border border-white/10 p-6 max-h-[85vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Worker Details</h3>
+                                <button className="text-slate-400 hover:text-white" onClick={() => setSelectedWorker(null)}>
+                                    <MoreVertical size={18} />
+                                </button>
+                            </div>
+                            <div className="grid lg:grid-cols-2 gap-6">
+                                <div className="space-y-2 text-sm text-slate-300">
+                                    <div><span className="text-slate-500">Name:</span> {selectedWorker.name || "Worker"}</div>
+                                    <div><span className="text-slate-500">Email:</span> {selectedWorker.email || "-"}</div>
+                                    <div><span className="text-slate-500">Department:</span> {selectedWorker.department || "-"}</div>
+                                    <div><span className="text-slate-500">Assigned:</span> {selectedWorker.assignedTasks || 0}</div>
+                                    <div><span className="text-slate-500">Completed:</span> {selectedWorker.completedTasks || 0}</div>
+                                </div>
+                                <div className="rounded-xl border border-white/10 p-4">
+                                    <h4 className="text-sm font-semibold mb-3">Assigned Grievances</h4>
+                                    {grievances.filter((g) => g.assignedWorkerId === selectedWorker.id).length === 0 ? (
+                                        <p className="text-xs text-slate-500">No assigned grievances.</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {grievances
+                                                .filter((g) => g.assignedWorkerId === selectedWorker.id)
+                                                .map((g) => (
+                                                    <div key={g.id} className="p-3 rounded-lg bg-white/5">
+                                                        <div className="text-sm font-medium text-white">{g.title || "Untitled"}</div>
+                                                        <div className="text-xs text-slate-400">{g.category || "-"} • {g.status || "-"}</div>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {assignWorker && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                        <div className="w-full max-w-md rounded-2xl bg-[#0a0a0a] border border-white/10 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Assign Task</h3>
+                                <button className="text-slate-400 hover:text-white" onClick={() => setAssignWorker(null)}>
+                                    <MoreVertical size={18} />
+                                </button>
+                            </div>
+                            <div className="space-y-3">
+                                <select
+                                    value={selectedGrievanceId}
+                                    onChange={(e) => setSelectedGrievanceId(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50"
+                                >
+                                    <option value="">Select grievance</option>
+                                    {unassignedGrievances.map((g) => (
+                                        <option key={g.id} value={g.id}>
+                                            {g.title || g.id}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={handleAssign}
+                                    disabled={!selectedGrievanceId || saving}
+                                    className="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2.5 rounded-xl disabled:opacity-60"
+                                >
+                                    {saving ? "Assigning..." : "Assign"}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>

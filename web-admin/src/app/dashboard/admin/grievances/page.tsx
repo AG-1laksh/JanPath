@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const ADMIN_SIDEBAR_ITEMS = [
@@ -39,6 +39,8 @@ type Grievance = {
     createdAt?: any;
     location?: { address?: string } | null;
     userId?: string;
+    description?: string;
+    imageBase64?: string;
 };
 
 export default function GrievancesPage() {
@@ -48,12 +50,25 @@ export default function GrievancesPage() {
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
     const [grievances, setGrievances] = useState<Grievance[]>([]);
     const [userMap, setUserMap] = useState<Record<string, string>>({});
+    const [workers, setWorkers] = useState<Array<{ id: string; name?: string; email?: string }>>([]);
+    const [selectedGrievance, setSelectedGrievance] = useState<Grievance | null>(null);
+    const [assignGrievance, setAssignGrievance] = useState<Grievance | null>(null);
+    const [statusGrievance, setStatusGrievance] = useState<Grievance | null>(null);
+    const [selectedWorkerId, setSelectedWorkerId] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [statusLogs, setStatusLogs] = useState<any[]>([]);
 
     useEffect(() => {
         if (!db) return;
-        const grievancesQuery = query(collection(db, "grievances"), orderBy("createdAt", "desc"));
+        const grievancesQuery = query(collection(db, "grievances"));
         const unsubscribe = onSnapshot(grievancesQuery, (snapshot) => {
-            setGrievances(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })) as Grievance[]);
+            const items = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })) as Grievance[];
+            items.sort((a, b) => {
+                const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+                const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+                return bTime - aTime;
+            });
+            setGrievances(items);
         });
         return () => unsubscribe();
     }, []);
@@ -71,6 +86,71 @@ export default function GrievancesPage() {
         });
         return () => unsubscribe();
     }, []);
+
+    useEffect(() => {
+        if (!db) return;
+        const workersQuery = query(collection(db, "users"), where("role", "==", "WORKER"));
+        const unsubscribe = onSnapshot(workersQuery, (snapshot) => {
+            setWorkers(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) })));
+        });
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (!db || !selectedGrievance?.id) {
+            setStatusLogs([]);
+            return;
+        }
+        const logsQuery = query(
+            collection(db, "statusLogs"),
+            where("grievanceId", "==", selectedGrievance.id),
+            orderBy("timestamp", "asc")
+        );
+        const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
+            setStatusLogs(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        });
+        return () => unsubscribe();
+    }, [selectedGrievance]);
+
+    const handleAssign = async () => {
+        if (!db || !assignGrievance || !selectedWorkerId) return;
+        try {
+            setSaving(true);
+            await updateDoc(doc(db, "grievances", assignGrievance.id), {
+                assignedWorkerId: selectedWorkerId,
+                status: "Assigned",
+            });
+            await addDoc(collection(db, "statusLogs"), {
+                grievanceId: assignGrievance.id,
+                status: "Assigned",
+                updatedBy: "admin",
+                remarks: "Assigned by admin",
+                timestamp: serverTimestamp(),
+            });
+            setAssignGrievance(null);
+            setSelectedWorkerId("");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const updateStatus = async (grievance: Grievance, status: string) => {
+        if (!db) return;
+        try {
+            setSaving(true);
+            await updateDoc(doc(db, "grievances", grievance.id), { status });
+            await addDoc(collection(db, "statusLogs"), {
+                grievanceId: grievance.id,
+                status,
+                updatedBy: "admin",
+                remarks: `Status set to ${status}`,
+                timestamp: serverTimestamp(),
+            });
+            setStatusGrievance(null);
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -93,9 +173,10 @@ export default function GrievancesPage() {
 
     const normalizeStatus = (status?: string) => {
         if (!status) return "pending";
-        if (status === "Resolved" || status === "Closed") return "resolved";
+        if (status === "Resolved" || status === "Closed" || status === "Completed") return "resolved";
         if (status === "Rejected") return "rejected";
         if (status === "In Progress") return "in-progress";
+        if (status === "Assigned" || status === "Submitted") return "pending";
         return "pending";
     };
 
@@ -119,7 +200,10 @@ export default function GrievancesPage() {
 
     const grievanceStats = useMemo(() => {
         const total = grievances.length;
-        const pending = grievances.filter((g) => normalizeStatus(g.status) === "pending" || normalizeStatus(g.status) === "in-progress").length;
+        const pending = grievances.filter((g) => {
+            const status = normalizeStatus(g.status);
+            return status === "pending" || status === "in-progress";
+        }).length;
         const resolved = grievances.filter((g) => normalizeStatus(g.status) === "resolved").length;
         const rejected = grievances.filter((g) => normalizeStatus(g.status) === "rejected").length;
         return [
@@ -233,9 +317,19 @@ export default function GrievancesPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${getStatusColor(normalizeStatus(grievance.status))}`}>
-                                                {normalizeStatus(grievance.status) === 'in-progress' ? t("In Progress") : t(normalizeStatus(grievance.status).charAt(0).toUpperCase() + normalizeStatus(grievance.status).slice(1))}
-                                            </span>
+                                            {(() => {
+                                                const normalized = normalizeStatus(grievance.status);
+                                                const displayStatus = grievance.assignedWorkerId && normalized === "pending"
+                                                    ? "Assigned"
+                                                    : normalized === "in-progress"
+                                                        ? "In Progress"
+                                                        : normalized.charAt(0).toUpperCase() + normalized.slice(1);
+                                                return (
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${getStatusColor(normalized)}`}>
+                                                        {t(displayStatus)}
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-slate-300 text-sm">
                                             {grievance.assignedWorkerId
@@ -247,13 +341,25 @@ export default function GrievancesPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex gap-2">
-                                                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors group">
+                                                <button
+                                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors group"
+                                                    onClick={() => setSelectedGrievance(grievance)}
+                                                >
                                                     <Eye size={16} className="text-slate-400 group-hover:text-purple-400" />
                                                 </button>
-                                                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors group">
+                                                <button
+                                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors group"
+                                                    onClick={() => {
+                                                        setAssignGrievance(grievance);
+                                                        setSelectedWorkerId(grievance.assignedWorkerId || "");
+                                                    }}
+                                                >
                                                     <UserCheck size={16} className="text-slate-400 group-hover:text-blue-400" />
                                                 </button>
-                                                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors group">
+                                                <button
+                                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors group"
+                                                    onClick={() => setStatusGrievance(grievance)}
+                                                >
                                                     <MoreVertical size={16} className="text-slate-400 group-hover:text-white" />
                                                 </button>
                                             </div>
@@ -271,6 +377,128 @@ export default function GrievancesPage() {
                         </div>
                     )}
                 </div>
+
+                {selectedGrievance && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                        <div className="w-full max-w-4xl rounded-2xl bg-[#0a0a0a] border border-white/10 p-6 max-h-[85vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Grievance Details</h3>
+                                <button
+                                    className="text-slate-400 hover:text-white"
+                                    onClick={() => setSelectedGrievance(null)}
+                                >
+                                    <XCircle size={18} />
+                                </button>
+                            </div>
+                            <div className="grid lg:grid-cols-2 gap-6">
+                                <div className="space-y-3 text-sm text-slate-300">
+                                    <div><span className="text-slate-500">Title:</span> {selectedGrievance.title || "-"}</div>
+                                    <div><span className="text-slate-500">Category:</span> {selectedGrievance.category || "-"}</div>
+                                    <div><span className="text-slate-500">Priority:</span> {selectedGrievance.priority || "-"}</div>
+                                    <div><span className="text-slate-500">Status:</span> {selectedGrievance.status || "-"}</div>
+                                    <div><span className="text-slate-500">Assigned:</span> {selectedGrievance.assignedWorkerId ? userMap[selectedGrievance.assignedWorkerId] || selectedGrievance.assignedWorkerId : "Not assigned"}</div>
+                                    <div><span className="text-slate-500">Created:</span> {selectedGrievance.createdAt?.toDate ? selectedGrievance.createdAt.toDate().toLocaleString() : "-"}</div>
+                                    <div><span className="text-slate-500">Location:</span> {selectedGrievance.location?.address || "-"}</div>
+                                    <div><span className="text-slate-500">Description:</span> {selectedGrievance.description || "-"}</div>
+                                </div>
+                                <div className="space-y-4">
+                                    {selectedGrievance.imageBase64 ? (
+                                        <img
+                                            src={`data:image/jpeg;base64,${selectedGrievance.imageBase64}`}
+                                            alt="Grievance"
+                                            className="w-full rounded-xl border border-white/10"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-48 rounded-xl border border-white/10 flex items-center justify-center text-slate-500">
+                                            No image uploaded
+                                        </div>
+                                    )}
+                                    <div className="rounded-xl border border-white/10 p-4">
+                                        <h4 className="text-sm font-semibold mb-3">Status Updates</h4>
+                                        {statusLogs.length === 0 ? (
+                                            <p className="text-xs text-slate-500">No updates yet.</p>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {statusLogs.map((log) => (
+                                                    <div key={log.id} className="p-3 rounded-lg bg-white/5">
+                                                        <div className="text-sm font-medium text-white">{log.status}</div>
+                                                        <div className="text-xs text-slate-400">{log.remarks || ""}</div>
+                                                        <div className="text-[11px] text-slate-500 mt-1">
+                                                            {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : ""}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {assignGrievance && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                        <div className="w-full max-w-md rounded-2xl bg-[#0a0a0a] border border-white/10 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Assign Worker</h3>
+                                <button
+                                    className="text-slate-400 hover:text-white"
+                                    onClick={() => setAssignGrievance(null)}
+                                >
+                                    <XCircle size={18} />
+                                </button>
+                            </div>
+                            <select
+                                value={selectedWorkerId}
+                                onChange={(e) => setSelectedWorkerId(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50"
+                            >
+                                <option value="">Select worker</option>
+                                {workers.map((worker) => (
+                                    <option key={worker.id} value={worker.id}>
+                                        {worker.name || worker.email || worker.id}
+                                    </option>
+                                ))}
+                            </select>
+                            <button
+                                onClick={handleAssign}
+                                disabled={!selectedWorkerId || saving}
+                                className="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2.5 rounded-xl disabled:opacity-60"
+                            >
+                                {saving ? "Assigning..." : "Assign"}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {statusGrievance && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                        <div className="w-full max-w-md rounded-2xl bg-[#0a0a0a] border border-white/10 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Update Status</h3>
+                                <button
+                                    className="text-slate-400 hover:text-white"
+                                    onClick={() => setStatusGrievance(null)}
+                                >
+                                    <XCircle size={18} />
+                                </button>
+                            </div>
+                            <div className="space-y-3">
+                                {["In Progress", "Completed", "Resolved", "Rejected"].map((status) => (
+                                    <button
+                                        key={status}
+                                        onClick={() => updateStatus(statusGrievance, status)}
+                                        disabled={saving}
+                                        className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-2.5 rounded-xl"
+                                    >
+                                        {saving ? "Updating..." : status}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );

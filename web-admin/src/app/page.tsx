@@ -8,6 +8,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sparkles } from "@react-three/drei";
 import Lenis from "lenis";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   Star,
   Activity,
@@ -151,6 +153,8 @@ function BentoCard({
 }
 
 export default function Page() {
+  const router = useRouter();
+  const { user, role, loading } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ container: scrollRef });
@@ -172,6 +176,17 @@ export default function Page() {
     frame = requestAnimationFrame(raf);
     return () => cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (role === "ADMIN") {
+      router.replace("/dashboard/admin");
+    } else if (role === "WORKER") {
+      router.replace("/dashboard/worker");
+    } else {
+      router.replace("/dashboard/citizen");
+    }
+  }, [loading, role, router, user]);
 
   return (
     <div ref={scrollRef} className={`${styles.page} custom-scrollbar`}>

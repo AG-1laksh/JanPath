@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -8,9 +8,11 @@ import { ArrowRight, Loader2, Shield, Users, Mail } from "lucide-react";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "../../../lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CitizenLogin() {
     const router = useRouter();
+    const { user, role, loading: authLoading } = useAuth();
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -68,6 +70,13 @@ export default function CitizenLogin() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (authLoading || !user) return;
+        if (role === "ADMIN") router.replace("/dashboard/admin");
+        else if (role === "WORKER") router.replace("/dashboard/worker");
+        else router.replace("/dashboard/citizen");
+    }, [authLoading, role, router, user]);
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-background p-6 relative overflow-hidden text-foreground">

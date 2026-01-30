@@ -55,10 +55,22 @@ export default function AdminDashboard() {
         return () => unsubscribe();
     }, []);
 
+    const normalizeStatus = (status?: string) => {
+        if (!status) return "pending";
+        if (status === "Resolved" || status === "Closed" || status === "Completed") return "resolved";
+        if (status === "Rejected") return "rejected";
+        if (status === "In Progress") return "in-progress";
+        if (status === "Assigned" || status === "Submitted") return "pending";
+        return "pending";
+    };
+
     const stats = useMemo(() => {
         const total = grievances.length;
-        const pending = grievances.filter((g) => g.status === "Submitted" || g.status === "Assigned" || g.status === "In Progress").length;
-        const resolved = grievances.filter((g) => g.status === "Resolved").length;
+        const pending = grievances.filter((g) => {
+            const normalized = normalizeStatus(g.status);
+            return normalized === "pending" || normalized === "in-progress";
+        }).length;
+        const resolved = grievances.filter((g) => normalizeStatus(g.status) === "resolved").length;
         const avgResponse = "-";
         return [
             { label: "Total Grievances", value: total.toString(), icon: FileText, color: "purple" },
