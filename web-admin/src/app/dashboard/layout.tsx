@@ -14,7 +14,7 @@ export default function DashboardLayout({
     const { user, role, loading } = useAuth();
 
     useEffect(() => {
-        if (loading) return;
+        if (loading || !pathname) return;
 
         if (!user) {
             if (pathname.startsWith("/dashboard/admin")) router.replace("/auth/admin");

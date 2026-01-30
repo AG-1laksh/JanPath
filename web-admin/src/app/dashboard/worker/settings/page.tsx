@@ -17,7 +17,8 @@ import {
     Moon,
     Sun,
     Globe,
-    Settings
+    Settings,
+    MapPin
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSettings } from "@/context/SettingsContext";

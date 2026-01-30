@@ -11,7 +11,8 @@ import {
     Crosshair,
     Route,
     Clock,
-    AlertTriangle
+    AlertTriangle,
+    MapPin
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
