@@ -167,7 +167,7 @@ export default function WorkerLogin() {
                 >
                     <div className="relative group">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-lime-500 rounded-3xl opacity-30 group-hover:opacity-50 transition duration-500 blur-lg" />
-                        <div className="relative bg-card border border-border rounded-3xl p-8 shadow-2xl">
+                        <div className="relative bg-card border border-border rounded-3xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
 
                             <div className="mb-8 text-center md:text-left">
                                 <h2 className="text-2xl font-semibold text-foreground mb-2">Field Login</h2>
