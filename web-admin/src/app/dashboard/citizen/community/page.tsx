@@ -69,7 +69,10 @@ export default function CommunityImpactPage() {
                 ...docSnap.data()
             })) as Grievance[];
 
-            setGrievances(data);
+            // Filter to only show public grievances (isPublic !== false for backward compatibility)
+            const publicData = data.filter((g: any) => g.isPublic !== false);
+
+            setGrievances(publicData);
 
             // Calculate stats
             const total = data.length;

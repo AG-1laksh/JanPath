@@ -115,7 +115,7 @@ const dashStyles = StyleSheet.create({
 // Create Grievance Tab
 const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
   const { t } = useLanguage();
-  const [form, setForm] = useState({ title: '', description: '', category: '', priority: 'Medium' });
+  const [form, setForm] = useState({ title: '', description: '', category: '', priority: 'Medium', isPublic: true });
   const [imageBase64, setImageBase64] = useState('');
   const [location, setLocation] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -178,6 +178,7 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
         location: location || null,
         userId: currentUser.uid,
         assignedWorkerId: null,
+        isPublic: form.isPublic,
         createdAt: serverTimestamp(),
       });
 
@@ -190,7 +191,7 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
       });
 
       await batch.commit();
-      setForm({ title: '', description: '', category: '', priority: 'Medium' });
+      setForm({ title: '', description: '', category: '', priority: 'Medium', isPublic: true });
       setImageBase64('');
       setLocation(null);
       Alert.alert(t('common.success'), t('messages.submitted'));
@@ -280,6 +281,29 @@ const CreateGrievanceTab = ({ currentUser, onSuccess }) => {
             </TouchableOpacity>
           </View>
         ) : null}
+
+        <Text style={createStyles.label}>{t('create.visibility') || 'Visibility'}</Text>
+        <View style={createStyles.visibilityRow}>
+          <TouchableOpacity
+            style={[createStyles.visibilityBtn, form.isPublic && createStyles.visibilityBtnActive]}
+            onPress={() => setForm(p => ({ ...p, isPublic: true }))}
+          >
+            <Ionicons name="globe-outline" size={20} color={form.isPublic ? '#fff' : '#64748b'} />
+            <Text style={[createStyles.visibilityText, form.isPublic && createStyles.visibilityTextActive]}>{t('create.shareInCommunity') || 'Share in Community'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[createStyles.visibilityBtn, !form.isPublic && createStyles.visibilityBtnPrivate]}
+            onPress={() => setForm(p => ({ ...p, isPublic: false }))}
+          >
+            <Ionicons name="lock-closed-outline" size={20} color={!form.isPublic ? '#fff' : '#64748b'} />
+            <Text style={[createStyles.visibilityText, !form.isPublic && createStyles.visibilityTextActive]}>{t('create.keepPrivate') || 'Keep Private'}</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={createStyles.visibilityHint}>
+          {form.isPublic
+            ? (t('create.publicHint') || 'Your report will be visible in the Community section.')
+            : (t('create.privateHint') || 'Your report will only be visible to you and assigned workers.')}
+        </Text>
       </View>
 
       <TouchableOpacity
@@ -319,6 +343,13 @@ const createStyles = StyleSheet.create({
   removeBtn: { position: 'absolute', top: 8, right: 8 },
   locationCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0fdf4', padding: 12, borderRadius: 10, gap: 8 },
   locationText: { flex: 1, fontSize: 13, color: '#1e293b' },
+  visibilityRow: { flexDirection: 'row', gap: 12, marginBottom: 8 },
+  visibilityBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc', padding: 14, borderRadius: 12, gap: 8, borderWidth: 1, borderColor: '#e2e8f0' },
+  visibilityBtnActive: { backgroundColor: '#22c55e', borderColor: '#22c55e' },
+  visibilityBtnPrivate: { backgroundColor: '#f59e0b', borderColor: '#f59e0b' },
+  visibilityText: { fontSize: 13, fontWeight: '600', color: '#64748b' },
+  visibilityTextActive: { color: '#fff' },
+  visibilityHint: { fontSize: 12, color: '#94a3b8', marginBottom: 16 },
   submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3b82f6', padding: 16, borderRadius: 12, gap: 8, marginBottom: 40 },
   submitBtnDisabled: { opacity: 0.5 },
   submitText: { fontSize: 16, fontWeight: '600', color: '#fff' },
@@ -434,7 +465,9 @@ const CommunityTab = ({ currentUser, onSelectGrievance }) => {
     );
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setAllGrievances(data);
+      // Filter to only show public grievances (isPublic !== false for backward compatibility)
+      const publicData = data.filter(g => g.isPublic !== false);
+      setAllGrievances(publicData);
       setLoading(false);
     });
     return () => unsub();

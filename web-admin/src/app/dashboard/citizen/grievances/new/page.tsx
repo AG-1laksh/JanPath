@@ -13,7 +13,9 @@ import {
     MapPin,
     ArrowLeft,
     Loader2,
-    CheckCircle
+    CheckCircle,
+    Globe,
+    Lock
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -45,6 +47,7 @@ export default function NewGrievancePage() {
     const [location, setLocation] = useState("Detecting location...");
     const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
     const [description, setDescription] = useState("");
+    const [isPublic, setIsPublic] = useState(true);
 
     useEffect(() => {
         if (!navigator.geolocation) {
@@ -95,6 +98,7 @@ export default function NewGrievancePage() {
                 location: coords ? { ...coords, address: location } : { address: location },
                 userId: user.uid,
                 assignedWorkerId: null,
+                isPublic: isPublic,
                 createdAt: serverTimestamp(),
             });
 
@@ -134,8 +138,8 @@ export default function NewGrievancePage() {
                                             type="button"
                                             onClick={() => setCategory(cat)}
                                             className={`p-3 rounded-xl border text-sm font-medium transition-all text-left ${category === cat
-                                                    ? "bg-purple-600/20 border-purple-500 text-purple-300"
-                                                    : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+                                                ? "bg-purple-600/20 border-purple-500 text-purple-300"
+                                                : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
                                                 }`}
                                         >
                                             {t(cat)}
@@ -163,6 +167,41 @@ export default function NewGrievancePage() {
                                     <MapPin size={18} className="text-purple-400" />
                                     <span className="text-sm font-mono">{location}</span>
                                 </div>
+                            </div>
+
+                            {/* Privacy Toggle */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-slate-300 ml-1 uppercase tracking-wider">Visibility</label>
+                                <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPublic(true)}
+                                        className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-all ${isPublic
+                                                ? "bg-emerald-600/20 border border-emerald-500 text-emerald-300"
+                                                : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <Globe size={18} />
+                                        <span className="text-sm font-medium">Share in Community</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPublic(false)}
+                                        className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-all ${!isPublic
+                                                ? "bg-orange-600/20 border border-orange-500 text-orange-300"
+                                                : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <Lock size={18} />
+                                        <span className="text-sm font-medium">Keep Private</span>
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-500 ml-1">
+                                    {isPublic
+                                        ? "Your report will be visible in the Community section for others to see and support."
+                                        : "Your report will only be visible to you and the assigned workers."
+                                    }
+                                </p>
                             </div>
 
                             {/* Submit Button */}
@@ -232,4 +271,3 @@ export default function NewGrievancePage() {
         </div>
     );
 }
-

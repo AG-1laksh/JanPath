@@ -87,7 +87,11 @@ export default function TransparencyWallPage() {
                 id: docSnap.id,
                 ...docSnap.data()
             })) as Grievance[];
-            setGrievances(data);
+
+            // Filter to only show public grievances (isPublic !== false for backward compatibility)
+            const publicData = data.filter((g: any) => g.isPublic !== false);
+
+            setGrievances(publicData);
             setLoading(false);
         });
 
