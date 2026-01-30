@@ -5,7 +5,6 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import {
     LayoutDashboard,
-    MapPin,
     Calendar,
     CheckSquare,
     Clock,
@@ -19,7 +18,6 @@ import {
 
 const WORKER_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "My Tasks", href: "/dashboard/worker" },
-    { icon: MapPin, label: "Map View", href: "/dashboard/worker/map" },
     { icon: Calendar, label: "Schedule", href: "/dashboard/worker/schedule" },
     { icon: Clock, label: "Shift Tracking", href: "/dashboard/worker/shifts" },
     { icon: UserCheck, label: "Attendance", href: "/dashboard/worker/attendance" },

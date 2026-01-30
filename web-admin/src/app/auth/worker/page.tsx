@@ -5,8 +5,8 @@ import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Loader2, BadgeCheck, HardHat, Hammer, MapPin, AlertCircle } from "lucide-react";
@@ -14,8 +14,18 @@ import { ArrowRight, Loader2, BadgeCheck, HardHat, Hammer, MapPin, AlertCircle }
 export default function WorkerLogin() {
     const router = useRouter();
     const { user, role, loading: authLoading } = useAuth();
+    const [mode, setMode] = useState<"signin" | "signup">("signin");
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [dob, setDob] = useState("");
+    const [phone, setPhone] = useState("");
+    const [aadhar, setAadhar] = useState("");
+    const [city, setCity] = useState("");
+    const [department, setDepartment] = useState("");
+    const [skills, setSkills] = useState("");
+    const [experienceYears, setExperienceYears] = useState("");
+    const [experienceMonths, setExperienceMonths] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -31,11 +41,67 @@ export default function WorkerLogin() {
         }
 
         try {
+            if (mode === "signup") {
+                if (!name || !dob || !phone || !aadhar || !city || !department || !skills) {
+                    setError("Please fill all required worker details.");
+                    setIsLoading(false);
+                    return;
+                }
+
+                const userCred = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, "users", userCred.user.uid), {
+                    name,
+                    email,
+                    role: "WORKER_PENDING",
+                    department,
+                    createdAt: serverTimestamp(),
+                });
+                await addDoc(collection(db, "workerSignupRequests"), {
+                    workerId: userCred.user.uid,
+                    name,
+                    email,
+                    dob,
+                    phone,
+                    aadhar,
+                    city,
+                    department,
+                    skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+                    experienceYears,
+                    experienceMonths,
+                    status: "Pending",
+                    requestedAt: serverTimestamp(),
+                });
+                setError("Request sent. Admin approval required before login.");
+                await signOut(auth);
+                setIsLoading(false);
+                return;
+            }
+
             await signInWithEmailAndPassword(auth, email, password);
             const userRef = doc(db, "users", auth.currentUser?.uid || "");
             const userSnap = await getDoc(userRef);
-            const role = userSnap.data()?.role;
-            if (role !== "WORKER") {
+            let userRole = userSnap.data()?.role;
+
+            if (userRole !== "WORKER") {
+                const approvalsQuery = query(
+                    collection(db, "workerSignupRequests"),
+                    where("workerId", "==", auth.currentUser?.uid),
+                    where("status", "in", ["Approved", "approved", "APPROVED"])
+                );
+                const approvalsSnap = await getDocs(approvalsQuery);
+                if (!approvalsSnap.empty) {
+                    await updateDoc(userRef, { role: "WORKER" });
+                    userRole = "WORKER";
+                }
+            }
+
+            if (userRole === "WORKER_PENDING") {
+                setError("Pending approval: Admin approval is required.");
+                await signOut(auth);
+                setIsLoading(false);
+                return;
+            }
+            if (userRole !== "WORKER") {
                 setError("Access Denied: Worker privileges required.");
                 await signOut(auth);
                 setIsLoading(false);
@@ -52,7 +118,6 @@ export default function WorkerLogin() {
         if (authLoading || !user) return;
         if (role === "WORKER") router.replace("/dashboard/worker");
         else if (role === "ADMIN") router.replace("/dashboard/admin");
-        else router.replace("/dashboard/citizen");
     }, [authLoading, role, router, user]);
 
     return (
@@ -110,6 +175,112 @@ export default function WorkerLogin() {
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-5">
+                                {mode === "signup" && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Full Name</label>
+                                            <div className="relative group/input">
+                                                <BadgeCheck className="absolute left-4 top-3.5 text-muted-foreground group-focus-within/input:text-emerald-400 transition-colors" size={18} />
+                                                <input
+                                                    type="text"
+                                                    value={name}
+                                                    onChange={(e) => setName(e.target.value)}
+                                                    placeholder="Full name"
+                                                    className="w-full bg-muted border border-border rounded-xl px-12 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Date of Birth</label>
+                                            <input
+                                                type="text"
+                                                value={dob}
+                                                onChange={(e) => setDob(e.target.value)}
+                                                placeholder="DD/MM/YYYY"
+                                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Phone</label>
+                                            <input
+                                                type="tel"
+                                                value={phone}
+                                                onChange={(e) => setPhone(e.target.value)}
+                                                placeholder="Phone"
+                                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Aadhar</label>
+                                            <input
+                                                type="text"
+                                                value={aadhar}
+                                                onChange={(e) => setAadhar(e.target.value)}
+                                                placeholder="Aadhar"
+                                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">City</label>
+                                            <input
+                                                type="text"
+                                                value={city}
+                                                onChange={(e) => setCity(e.target.value)}
+                                                placeholder="City"
+                                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Department</label>
+                                            <input
+                                                type="text"
+                                                value={department}
+                                                onChange={(e) => setDepartment(e.target.value)}
+                                                placeholder="Department"
+                                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Skills (comma separated)</label>
+                                            <input
+                                                type="text"
+                                                value={skills}
+                                                onChange={(e) => setSkills(e.target.value)}
+                                                placeholder="Road Repair, Plumbing"
+                                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Experience Years</label>
+                                                <input
+                                                    type="number"
+                                                    value={experienceYears}
+                                                    onChange={(e) => setExperienceYears(e.target.value)}
+                                                    placeholder="Years"
+                                                    className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Experience Months</label>
+                                                <input
+                                                    type="number"
+                                                    value={experienceMonths}
+                                                    onChange={(e) => setExperienceMonths(e.target.value)}
+                                                    placeholder="Months"
+                                                    className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:bg-accent transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground ml-1 uppercase tracking-wider">Email Address</label>
                                     <div className="relative group/input">
@@ -163,9 +334,17 @@ export default function WorkerLogin() {
                                         <Loader2 className="animate-spin" size={20} />
                                     ) : (
                                         <>
-                                            Access Dashboard <ArrowRight size={18} />
+                                            {mode === "signup" ? "Request Access" : "Access Dashboard"} <ArrowRight size={18} />
                                         </>
                                     )}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+                                    className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {mode === "signin" ? "No account? Request worker access" : "Already requested? Sign in"}
                                 </button>
                             </form>
 

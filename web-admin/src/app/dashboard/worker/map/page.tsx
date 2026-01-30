@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import {
     LayoutDashboard,
-    MapPin,
     Calendar,
     CheckSquare,
     Navigation,
@@ -14,12 +13,12 @@ import {
     Clock,
     AlertTriangle
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { useSettings } from "@/context/SettingsContext";
 
 const WORKER_SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "My Tasks", href: "/dashboard/worker" },
-    { icon: MapPin, label: "Map View", href: "/dashboard/worker/map" },
     { icon: Calendar, label: "Schedule", href: "/dashboard/worker/schedule" },
     { icon: Clock, label: "Shift Tracking", href: "/dashboard/worker/shifts" },
     { icon: Crosshair, label: "Attendance", href: "/dashboard/worker/attendance" },
@@ -55,7 +54,12 @@ const TASK_LOCATIONS = [
 
 export default function WorkerMapView() {
     const { t } = useSettings();
+    const router = useRouter();
     const [liveTracking, setLiveTracking] = useState(true);
+
+    useEffect(() => {
+        router.replace("/dashboard/worker");
+    }, [router]);
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-white">
@@ -63,8 +67,8 @@ export default function WorkerMapView() {
 
             <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 bg-[#050505] text-white">
                 <Header
-                    title={t("Location Map")}
-                    description={t("Track active tasks, route progress, and nearby alerts.")}
+                    title={t("Redirecting")}
+                    description={t("Map view has been removed.")}
                 />
 
                 <div className="grid lg:grid-cols-3 gap-8">
