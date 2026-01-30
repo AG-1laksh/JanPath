@@ -175,7 +175,7 @@ export default function AdminLoginPage() {
                                         <Loader2 className="animate-spin" size={20} />
                                     ) : (
                                         <>
-                                            Sign In (Demo) <ArrowRight size={18} />
+                                            Sign In<ArrowRight size={18} />
                                         </>
                                     )}
                                 </button>
