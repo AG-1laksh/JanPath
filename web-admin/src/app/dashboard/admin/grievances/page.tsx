@@ -452,7 +452,7 @@ export default function GrievancesPage() {
                             <select
                                 value={selectedWorkerId}
                                 onChange={(e) => setSelectedWorkerId(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50"
+                                className="w-full px-4 py-2.5 bg-[#1a1a1a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50 [&>option]:bg-[#1a1a1a] [&>option]:text-white"
                             >
                                 <option value="">Select worker</option>
                                 {workers.map((worker) => (
