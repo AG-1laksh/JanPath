@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Shield, Users, Mail } from "lucide-react";
+import { ArrowRight, Loader2, Shield, Users, Mail, Home } from "lucide-react";
+import Link from "next/link";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "../../../lib/firebase";
@@ -82,6 +83,15 @@ export default function CitizenLogin() {
         <div className="min-h-screen w-full flex items-center justify-center bg-background p-6 relative overflow-hidden text-foreground">
             <div className="absolute top-0 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-[128px] pointer-events-none" />
             <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-orange-500/20 rounded-full blur-[128px] pointer-events-none" />
+
+            {/* Back to Home */}
+            <Link
+                href="/"
+                className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors z-20"
+            >
+                <Home size={18} />
+                <span className="text-sm font-medium">Back to Home</span>
+            </Link>
 
             <div className="w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center relative z-10">
                 <motion.div

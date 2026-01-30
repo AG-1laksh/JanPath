@@ -9,7 +9,8 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } f
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Loader2, BadgeCheck, HardHat, Hammer, MapPin, AlertCircle } from "lucide-react";
+import { ArrowRight, Loader2, BadgeCheck, HardHat, Hammer, MapPin, AlertCircle, Home } from "lucide-react";
+import Link from "next/link";
 
 export default function WorkerLogin() {
     const router = useRouter();
@@ -125,6 +126,15 @@ export default function WorkerLogin() {
             {/* Ambient Background Effects - Emerald/Lime */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[128px] pointer-events-none" />
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-lime-500/20 rounded-full blur-[128px] pointer-events-none" />
+
+            {/* Back to Home */}
+            <Link
+                href="/"
+                className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors z-20"
+            >
+                <Home size={18} />
+                <span className="text-sm font-medium">Back to Home</span>
+            </Link>
 
             <div className="w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center relative z-10">
 

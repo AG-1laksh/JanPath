@@ -9,7 +9,8 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, Loader2, Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Mail, ArrowRight, ShieldCheck, Home } from "lucide-react";
+import Link from "next/link";
 
 const ADMIN_EMAIL = "admin@test.com";
 
@@ -62,6 +63,15 @@ export default function AdminLoginPage() {
             {/* Ambient Background Effects */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[128px] pointer-events-none" />
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[128px] pointer-events-none" />
+
+            {/* Back to Home */}
+            <Link
+                href="/"
+                className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors z-20"
+            >
+                <Home size={18} />
+                <span className="text-sm font-medium">Back to Home</span>
+            </Link>
 
             <div className="w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center relative z-10">
 
