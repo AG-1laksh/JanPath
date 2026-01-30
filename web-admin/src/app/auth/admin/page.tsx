@@ -15,20 +15,20 @@ const ADMIN_EMAIL = "admin@test.com";
 
 export default function AdminLoginPage() {
     const router = useRouter();
-    const { user, role, loading } = useAuth();
+    const { user, role, loading: authLoading } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
-        setLoading(true);
+        setIsLoading(true);
 
         if (!auth || !db) {
             setError("System Error: Firebase not configured.");
-            setLoading(false);
+            setIsLoading(false);
             return;
         }
 
@@ -40,22 +40,22 @@ export default function AdminLoginPage() {
             if (role !== "ADMIN") {
                 setError("Access Denied: Admin privileges required.");
                 await signOut(auth);
-                setLoading(false);
+                setIsLoading(false);
                 return;
             }
             router.push("/dashboard/admin");
         } catch (err) {
             setError("The email or password you entered is incorrect.");
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        if (loading || !user) return;
+        if (authLoading || !user) return;
         if (role === "ADMIN") router.replace("/dashboard/admin");
         else if (role === "WORKER") router.replace("/dashboard/worker");
         else router.replace("/dashboard/citizen");
-    }, [loading, role, router, user]);
+    }, [authLoading, role, router, user]);
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-background p-6 relative overflow-hidden text-foreground">
@@ -158,10 +158,10 @@ export default function AdminLoginPage() {
 
                                 <button
                                     type="submit"
-                                    disabled={loading}
+                                    disabled={isLoading}
                                     className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-3.5 rounded-xl transition-all shine-effect disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 mt-2"
                                 >
-                                    {loading ? (
+                                    {isLoading ? (
                                         <Loader2 className="animate-spin" size={20} />
                                     ) : (
                                         <>
