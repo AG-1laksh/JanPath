@@ -1,7 +1,8 @@
 .page {
   position: relative;
+  min-height: 100vh;
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: scroll;
   background: radial-gradient(circle at top, rgba(18, 16, 40, 0.9), rgba(8, 6, 14, 1) 60%),
     linear-gradient(120deg, rgba(20, 18, 36, 0.9), rgba(8, 6, 14, 0.95));
   color: #f8fafc;

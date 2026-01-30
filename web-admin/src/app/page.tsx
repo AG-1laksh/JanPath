@@ -6,7 +6,7 @@ import { motion, useScroll, useTransform, type Variants } from "framer-motion";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 
 import { Sparkles } from "@react-three/drei";
-import Lenis from "lenis";
+// import Lenis from "lenis";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -156,26 +156,10 @@ export default function Page() {
   const router = useRouter();
   const { user, role, loading } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ container: scrollRef });
   const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -120]);
 
-  useEffect(() => {
-    if (!scrollRef.current || !contentRef.current) return;
-    const lenis = new Lenis({ 
-      wrapper: scrollRef.current,
-      content: contentRef.current,
-      smoothWheel: true, 
-      lerp: 0.08 
-    });
-    let frame = 0;
-    const raf = (time: number) => {
-      lenis.raf(time);
-      frame = requestAnimationFrame(raf);
-    };
-    frame = requestAnimationFrame(raf);
-    return () => cancelAnimationFrame(frame);
-  }, []);
+  // Lenis removed - using native scroll
 
   useEffect(() => {
     if (loading || !user) return;
@@ -194,7 +178,7 @@ export default function Page() {
       <div className={styles.noise} />
 
 
-      <div ref={contentRef} className={styles.overlay}>
+      <div className={styles.overlay}>
         <nav className="relative z-20 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/80 rounded-lg flex items-center justify-center">
